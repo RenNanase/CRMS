@@ -12,12 +12,21 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\MajorCourseRegistration;
 use Illuminate\Support\Facades\Auth;
 use App\Models\RegistrationPeriod;
+use App\Models\Course;
 
 
 class CourseRequestController extends Controller
 {
         public function index(Request $request)
         {
+
+        // Check if major registration is open
+        $activeMajorPeriod = RegistrationPeriod::major()->active()->first();
+
+        if (!$activeMajorPeriod) {
+            return redirect()->back()->with('error', 'Major course registration is currently closed.');
+        }
+
             $query = CourseRequest::with(['group', 'course'])
                 ->when($request->filled('status'), function ($query) use ($request) {
                     return $query->where('status', $request->status);
@@ -36,10 +45,9 @@ class CourseRequestController extends Controller
                 });
 
             // Fetch only pending requests
-        $courseRequests = $query->where('status', 'pending')->get();
+            $courseRequests = $query->where('status', 'pending')->get();
 
-
-            return view('admin.course_requests.index', compact('courseRequests'));
+            return view('admin.course_requests.index', compact('courseRequests', 'activeMajorPeriod'));
         }
 
 
@@ -83,21 +91,32 @@ class CourseRequestController extends Controller
 
     public function store(Request $request)
     {
-        // Add this at the beginning of your store method
-        $activeRegistration = RegistrationPeriod::where('status', 'active')
-        ->where('start_date', '<=', now())
+
+
+        // Check if major registration is open
+        $activeRegistration = RegistrationPeriod::where('type', 'major')
+            ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
             ->first();
 
         if (!$activeRegistration) {
-            return redirect()->back()->with('error', 'Course registration is currently closed.');
+            return redirect()->back()->with('error', 'Major course registration is currently closed.');
+        }
+
+        // Check if student already has a request for this course
+        $existingRequest = CourseRequest::where('student_id', $request->student_id)
+            ->where('course_id', $request->course)
+            ->whereIn('status', ['pending', 'approved'])
+            ->first();
+
+        if ($existingRequest) {
+            $status = ucfirst($existingRequest->status);
+            return redirect()->back()
+                ->with('error', "You already have a {$status} request for this course.")
+                ->withInput();
         }
 
         \Log::info('Store method called', $request->all());
-        \Log::info('Incoming request data:', $request->all());
-
-        // Log method entry
-        \Log::info('Entering store method.');
 
         // Validate the request data
         $validator = Validator::make($request->all(), [
@@ -105,16 +124,14 @@ class CourseRequestController extends Controller
             'course' => 'required|exists:courses,id',
             'matric_number' => 'required|string',
             'student_status' => 'required|in:scholarship,non-scholarship',
-            'fee_receipt' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048', // Validate file type and size
+            'fee_receipt' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'remarks' => 'nullable|string|max:255',
         ]);
 
-        // Log validation results
         if ($validator->fails()) {
             \Log::error('Validation failed:', $validator->errors()->toArray());
             return Redirect::back()->withErrors($validator)->withInput();
         }
-        \Log::info('Validation passed:', $validator->validated());
 
         // Fetch the student's name
         $student = \App\Models\Student::findOrFail($request->student_id);
@@ -125,11 +142,10 @@ class CourseRequestController extends Controller
             $feeReceiptPath = $request->file('fee_receipt')->store('fee_receipts', 'public');
         }
 
-        // Fetch the group_id based on the course_id or any other criteria
+        // Fetch the group
         $group = Group::where('course_id', $request->course)->first();
 
         if (!$group) {
-            // Handle the case where no group is found
             return response()->json(['error' => 'Group not found'], 404);
         }
 
@@ -139,28 +155,17 @@ class CourseRequestController extends Controller
             'student_name' => $student->name,
             'course_id' => $request->course,
             'course_code' => $request->course_code,
-            'program' => $student->program->name ?? 'Unknown Program', // Automatically use student's program
+            'program' => $student->program->name ?? 'Unknown Program',
             'matric_number' => $request->matric_number,
-            'request_type' => 'major', // Set request type to major only
+            'request_type' => $request->request_type, // Store the request type
             'student_status' => $request->student_status,
-            'fee_receipt' => $feeReceiptPath, // Save the path
+            'fee_receipt' => $feeReceiptPath,
             'status' => 'pending',
-            'group_id' => $group->id, // Set the group_id from the fetched group
+            'group_id' => $group->id,
             'submission_date' => now(),
             'remarks' => $request->remarks,
+            'registration_period_id' => $activeRegistration->id // Store the registration period ID
         ]);
-
-        // Set submission date automatically
-        $courseRequest->submission_date = now();
-
-        // Log the data before saving
-        \Log::info('Data ready to be saved:', $courseRequest->toArray());
-
-        // Log the CourseRequest object
-        \Log::info('CourseRequest object:', $courseRequest->toArray());
-
-        // Log before saving
-        \Log::info('About to save CourseRequest object.');
 
         try {
             $courseRequest->save();
@@ -170,36 +175,72 @@ class CourseRequestController extends Controller
             return Redirect::back()->withErrors(['error' => 'Failed to save course request.']);
         }
     }
+
+    // Add method to check registration status
+    public function checkRegistrationStatus()
+    {
+        $activeRegistration = RegistrationPeriod::where('type', 'major')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
+
+        return response()->json([
+            'isOpen' => !is_null($activeRegistration),
+            'registrationPeriod' => $activeRegistration ? [
+                'start_date' => $activeRegistration->start_date->format('Y-m-d H:i:s'),
+                'end_date' => $activeRegistration->end_date->format('Y-m-d H:i:s')
+            ] : null
+        ]);
+    }
+
     public function showRegistrationForm(Request $request)
     {
-        if (!Auth::user()) {
-            \Log::info('User is not authenticated.');
-            return redirect()->route('login');
+        // Check registration period first
+        $activeMajorPeriod = RegistrationPeriod::where('type', 'major')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
+
+        if (!$activeMajorPeriod) {
+            return redirect()->route('student.dashboard')
+                ->with('error', 'Major course registration is currently closed.');
         }
 
-        \Log::info('User ID:', ['id' => Auth::id()]);
-        $registrations = MajorCourseRegistration::where('student_id', Auth::id())->get();
-        \Log::info('Registrations:', $registrations->toArray());
+        $student = Auth::user()->student;
+        $studentStatus = $student->is_scholarship;
+        $matricNumber = $student->matric_number;
 
-        return view('student.major-course-registration', compact('registrations'));
-    }
-    public function registerCourse(Request $request)
-    {
-        \Log::info('Register Course Method Called', ['request' => $request->all()]);
+        // Get all major courses
+        $majorCourses = Course::where('type', 'major')->get();
 
-        $request->validate([
-            'course_id' => 'required|exists:courses,id',
-        ]);
+        // Get student's existing course requests
+        $existingRequests = CourseRequest::where('student_id', $student->id)
+            ->whereIn('status', ['pending', 'approved'])
+            ->with('course') // Eager load course relationship
+            ->get();
 
-        $registration = new MajorCourseRegistration();
-        $registration->student_id = $request->user()->id;
-        $registration->course_id = $request->course_id;
-        $registration->status = 'pending';
-        $registration->save();
+        // Mark courses that student has already requested
+        $majorCourses = $majorCourses->map(function ($course) use ($existingRequests) {
+            $courseRequest = $existingRequests->where('course_id', $course->id)->first();
 
-        \Log::info('Registration Saved', ['registration' => $registration]);
+            $course->request_status = $courseRequest?->status;
+            $course->is_registered = (bool)$courseRequest;
+            $course->status_message = match($courseRequest?->status) {
+                'pending' => '[Pending Approval]',
+                'approved' => '[Already Registered]',
+                default => ''
+            };
 
-        return redirect()->route('student.registerMajorCourses')->with('success', 'Course registered successfully!');
+            return $course;
+        });
+
+        return view('student.major-course-registration', compact(
+            'student',
+            'studentStatus',
+            'matricNumber',
+            'majorCourses',
+            'activeMajorPeriod'
+        ));
     }
 
     public function getGroupInfo(Course $course): JsonResponse

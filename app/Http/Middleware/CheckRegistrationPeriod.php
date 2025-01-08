@@ -7,20 +7,29 @@ use App\Models\RegistrationPeriod;
 
 class CheckRegistrationPeriod
 {
-    public function handle($request, Closure $next)
+    public function handle($request, Closure $next, $type)
     {
-        $activeRegistration = RegistrationPeriod::where('status', 'active')
+        \Log::info('CheckRegistrationPeriod middleware running', [
+            'type' => $type,
+            'user_id' => auth()->id(),
+            'url' => $request->url()
+        ]);
+
+        $activePeriod = RegistrationPeriod::where('type', $type)
             ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
             ->first();
 
-        if (!$activeRegistration) {
-            return redirect()->route('dashboard')
-                ->with('error', 'Course registration is currently closed.');
-        }
+        \Log::info('Active period check:', [
+            'active_period' => $activePeriod,
+            'current_time' => now()
+        ]);
 
-        // Add the active registration period to the request
-        $request->merge(['active_registration' => $activeRegistration]);
+        if (!$activePeriod) {
+            \Log::warning('No active registration period found for type: ' . $type);
+            return redirect()->route('student.dashboard')
+                ->with('error', ucfirst($type) . ' course registration is currently closed.');
+        }
 
         return $next($request);
     }

@@ -1,8 +1,8 @@
 @php
-    \Log::info('View Data:', [
-        'majorCourses' => isset($majorCourses) ? $majorCourses->count() : 'not set',
-        'student' => isset($student) ? $student->id : 'not set',
-    ]);
+    $activeMajorPeriod = App\Models\RegistrationPeriod::where('type', 'major')
+        ->where('start_date', '<=', now())
+        ->where('end_date', '>=', now())
+        ->first();
 @endphp
 
 @extends('layouts.student')
@@ -10,45 +10,128 @@
 @section('title', 'Major Course Registration')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-b from-teal-50 to-white py-8">
-    <div class="container mx-auto max-w-4xl p-8 bg-white rounded-xl shadow-lg">
-        <!-- Alert Messages -->
-        @if(session('success'))
-            <div class="mb-6 p-4 bg-teal-100 border-l-4 border-teal-500 text-teal-700 rounded">
-                {{ session('success') }}
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
-                {{ session('error') }}
-            </div>
-        @endif
-
-        <!-- Registration Form Container -->
-        <div class="space-y-6">
-            <h3 class="text-2xl font-bold text-teal-800 text-center mb-8">Major Registration Form</h3>
-
-            <form action="{{ route('course-requests.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-                @csrf
-                <input type="hidden" name="student_id" value="{{ $student->id }}" />
-
-                <!-- Student Info Cards -->
-                <div class="grid md:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-teal-50 p-4 rounded-lg">
-                        <label class="block text-sm font-semibold text-teal-700 mb-2">Student Status</label>
-                        <p class="text-lg text-teal-900">{{ $studentStatus ? 'Scholarship' : 'Non-Scholarship' }}</p>
-                        <input type="hidden" name="student_status" value="{{ $studentStatus ? 'scholarship' : 'non-scholarship' }}" />
+    @if(!$activeMajorPeriod)
+        <div class="min-h-screen bg-gradient-to-b from-teal-50 to-white py-8">
+            <div class="container mx-auto max-w-4xl p-8">
+                <div class="text-center animate-fadeIn">
+                    <!-- SVG Illustration -->
+                    <div class="mb-8 animate-float">
+                        <svg class="mx-auto w-64 h-64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 15V17M6 21H18C19.1046 21 20 20.1046 20 19V5C20 3.89543 19.1046 3 18 3H6C4.89543 3 4 3.89543 4 5V19C4 20.1046 4.89543 21 6 21ZM16 11H8V7H16V11Z"
+                                  stroke="#EF4444"
+                                  stroke-width="2"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+                        </svg>
                     </div>
 
-                    <div class="bg-teal-50 p-4 rounded-lg">
-                        <label class="block text-sm font-semibold text-teal-700 mb-2">Matric Number</label>
-                        <p class="text-lg text-teal-900">{{ $matricNumber }}</p>
-                        <input type="hidden" name="matric_number" value="{{ $matricNumber }}" />
+                    <!-- Message -->
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4 animate-slideDown">
+                        Registration Closed
+                    </h2>
+                    <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg shadow-lg mb-6 animate-slideUp">
+                        <p class="text-xl text-red-700 font-medium">
+                            Major course registration is currently closed.
+                        </p>
+                        <p class="text-gray-600 mt-2">
+                            Please check back during the next registration period.
+                        </p>
+                    </div>
+
+                    <!-- Next Steps -->
+                    <div class="grid md:grid-cols-2 gap-6 mt-8 animate-fadeIn">
+                        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Need Help?</h3>
+                            <p class="text-gray-600">Contact your academic advisor for guidance</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Stay Updated</h3>
+                            <p class="text-gray-600">Check the academic calendar for upcoming registration dates</p>
+                        </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Form Fields -->
+        <!-- Add these styles to your head or in a stylesheet -->
+        <style>
+            @keyframes float {
+                0% { transform: translateY(0px); }
+                50% { transform: translateY(-20px); }
+                100% { transform: translateY(0px); }
+            }
+
+            @keyframes slideDown {
+                from { transform: translateY(-20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+
+            @keyframes slideUp {
+                from { transform: translateY(20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+
+            .animate-float {
+                animation: float 6s ease-in-out infinite;
+            }
+
+            .animate-slideDown {
+                animation: slideDown 0.5s ease-out;
+            }
+
+            .animate-slideUp {
+                animation: slideUp 0.5s ease-out;
+            }
+
+            .animate-fadeIn {
+                animation: fadeIn 1s ease-out;
+            }
+        </style>
+    @else
+        <div class="min-h-screen bg-gradient-to-b from-teal-50 to-white py-8">
+            <div class="container mx-auto max-w-4xl p-8 bg-white rounded-xl shadow-lg">
+                <!-- Alert Messages -->
+                @if(session('success'))
+                    <div class="mb-6 p-4 bg-teal-100 border-l-4 border-teal-500 text-teal-700 rounded">
+                        {{ session('success') }}
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+                <!-- Registration Form Container -->
                 <div class="space-y-6">
+                    <h3 class="text-2xl font-bold text-teal-800 text-center mb-8">Major Registration Form</h3>
+
+                    <form action="{{ route('course-requests.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                        @csrf
+                        <input type="hidden" name="student_id" value="{{ $student->id }}" />
+
+                        <!-- Student Info Cards -->
+                        <div class="grid md:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-teal-50 p-4 rounded-lg">
+                                <label class="block text-sm font-semibold text-teal-700 mb-2">Student Status</label>
+                                <p class="text-lg text-teal-900">{{ $studentStatus ? 'Scholarship' : 'Non-Scholarship' }}</p>
+                                <input type="hidden" name="student_status" value="{{ $studentStatus ? 'scholarship' : 'non-scholarship' }}" />
+                            </div>
+
+                            <div class="bg-teal-50 p-4 rounded-lg">
+                                <label class="block text-sm font-semibold text-teal-700 mb-2">Matric Number</label>
+                                <p class="text-lg text-teal-900">{{ $matricNumber }}</p>
+                                <input type="hidden" name="matric_number" value="{{ $matricNumber }}" />
+                            </div>
+                        </div>
+
+                        <!-- Form Fields -->
+                        <div class="space-y-6">
 
 <!-- Replace the program input field with this -->
 <div class="form-group">
@@ -86,14 +169,27 @@
                             <option value="">-- Select a course --</option>
                             @if(isset($majorCourses) && $majorCourses->isNotEmpty())
                                 @foreach($majorCourses as $course)
-                                    <option value="{{ $course->id }}" data-code="{{ $course->course_code }}">
+                                    <option value="{{ $course->id }}"
+                                            data-code="{{ $course->course_code }}"
+                                            {{ $course->is_registered ? 'disabled' : '' }}
+                                            class="{{ $course->request_status === 'approved' ? 'bg-gray-100 text-gray-500' : '' }}
+                                                    {{ $course->request_status === 'pending' ? 'bg-yellow-100 text-yellow-700' : '' }}">
                                         {{ $course->course_name }} ({{ $course->course_code }})
+                                        {{ $course->status_message }}
                                     </option>
                                 @endforeach
                             @else
                                 <option value="">No major courses available</option>
                             @endif
                         </select>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">
+                                <span class="inline-block w-3 h-3 bg-gray-100 mr-1"></span> Already registered courses are disabled
+                            </p>
+                            <p class="text-sm text-gray-500">
+                                <span class="inline-block w-3 h-3 bg-yellow-100 mr-1"></span> Courses with pending requests are disabled
+                            </p>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -216,4 +312,5 @@ document.getElementById('request_type').addEventListener('change', function() {
     }
 });
 </script>
+@endif
 @endsection

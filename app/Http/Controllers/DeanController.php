@@ -73,6 +73,15 @@ class DeanController extends Controller
     // Update showMinorRequest method to include necessary relationships
     public function showMinorRequest(MinorRegistration $minorRegistration)
     {
+
+        \Log::info('Dean Reviewing Minor Registration:', [
+            'registration_id' => $minorRegistration->id,
+            'file_path' => $minorRegistration->signed_form_path,
+            'storage_exists' => Storage::disk('public')->exists($minorRegistration->signed_form_path),
+            'public_exists' => file_exists(public_path('storage/' . $minorRegistration->signed_form_path)),
+            'storage_files' => Storage::disk('public')->files('minor-registrations'),
+        ]);
+
         // Verify the request belongs to dean's faculty
         if ($minorRegistration->course->faculty_id !== auth()->user()->faculty_id) {
             \Log::warning('Unauthorized minor request access:', [

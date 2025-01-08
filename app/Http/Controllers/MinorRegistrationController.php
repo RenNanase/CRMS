@@ -10,26 +10,55 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use PDF;
 use Illuminate\Support\Facades\Storage;
+use App\Models\RegistrationPeriod;
 
 class MinorRegistrationController extends Controller
 {
     public function create()
     {
+        \Log::info('Attempting to access minor registration create method');
+
+        // Check if minor registration is open
+        $activeMinorPeriod = RegistrationPeriod::minor()->active()->first();
+
+        \Log::info('Active minor period check:', ['active_period' => $activeMinorPeriod]);
+
+        if (!$activeMinorPeriod) {
+            \Log::warning('No active minor registration period found');
+            return redirect()->route('student.dashboard')
+                ->with('error', 'Minor course registration is currently closed.');
+        }
+
         $student = Student::with('program')
             ->where('user_id', Auth::id())
             ->firstOrFail();
+
+        \Log::info('Student found:', [
+            'student_id' => $student->id,
+            'user_id' => Auth::id()
+        ]);
 
         // Check if student has any pending or approved minor registration
         $existingRegistration = MinorRegistration::where('student_id', $student->id)
             ->whereIn('status', ['pending', 'approved'])
             ->first();
 
+        \Log::info('Existing registration check:', ['existing_registration' => $existingRegistration]);
+
         if ($existingRegistration) {
-            return redirect()->back()
-                ->with('error', 'You already have a ' . $existingRegistration->status . ' minor registration. You cannot submit another request until the current one is processed.');
+            \Log::warning('Student has existing registration', [
+                'status' => $existingRegistration->status
+            ]);
+
+            // Instead of redirecting, return view with existing registration info
+            return view('student.minor-registration.create', [
+                'student' => $student,
+                'existingRegistration' => $existingRegistration,
+                'message' => "You already have an {$existingRegistration->status} minor registration for {$existingRegistration->course_name}."
+            ]);
         }
 
-        // Join with faculties table to get faculty name
+        // If no existing registration, continue with normal flow
         $minorCourses = Course::where('type', 'minor')
             ->join('faculties', 'courses.faculty_id', '=', 'faculties.id')
             ->select(
@@ -40,12 +69,26 @@ class MinorRegistrationController extends Controller
             )
             ->get();
 
-        return view('student.minor-registration.create', compact('student', 'minorCourses'));
+        return view('student.minor-registration.create', [
+            'student' => $student,
+            'minorCourses' => $minorCourses,
+            'activeMinorPeriod' => $activeMinorPeriod
+        ]);
     }
 
     public function store(Request $request)
     {
         try {
+            // Check if minor registration is open
+            $activeRegistration = RegistrationPeriod::where('type', 'minor')
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->first();
+
+            if (!$activeRegistration) {
+                return redirect()->back()->with('error', 'Minor course registration is currently closed.');
+            }
+
             // Get the authenticated student with program relationship
             $student = Student::with('program')
                 ->where('user_id', Auth::id())
@@ -83,8 +126,39 @@ class MinorRegistrationController extends Controller
             // Get the course details
             $course = Course::with('faculty')->findOrFail($request->course_id);
 
-            // Store the PDF file
-            $pdfPath = $request->file('signed_form')->store('minor-registrations', 'public');
+            // Add debugging for file upload
+            \Log::info('File upload attempt:', [
+                'original_name' => $request->file('signed_form')->getClientOriginalName(),
+                'mime_type' => $request->file('signed_form')->getMimeType(),
+                'size' => $request->file('signed_form')->getSize(),
+            ]);
+
+            // Store the file ONCE with a unique name
+            $file = $request->file('signed_form');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+
+            // Ensure the directory exists
+            Storage::disk('public')->makeDirectory('minor-registrations');
+
+            // Store the file
+            $pdfPath = $file->storeAs(
+                'minor-registrations',
+                $fileName,
+                'public'
+            );
+
+            // Verify file storage
+            if (!Storage::disk('public')->exists($pdfPath)) {
+                throw new \Exception('File failed to store properly');
+            }
+
+            \Log::info('File Storage Debug:', [
+                'original_name' => $file->getClientOriginalName(),
+                'stored_name' => $fileName,
+                'stored_path' => $pdfPath,
+                'full_storage_path' => Storage::disk('public')->path($pdfPath),
+                'exists_after_store' => Storage::disk('public')->exists($pdfPath)
+            ]);
 
             // Prepare GPA data with null values for future semesters
             $gpaData = [
@@ -94,7 +168,7 @@ class MinorRegistrationController extends Controller
                 'semester4_gpa' => $request->semester4_gpa ?? null,
             ];
 
-            // Create the minor registration
+            // Create the minor registration with the verified file path
             $minorRegistration = MinorRegistration::create([
                 'student_id' => $student->id,
                 'name' => $student->name,
@@ -113,26 +187,27 @@ class MinorRegistrationController extends Controller
                 'course_name' => $course->course_name,
                 'faculty' => $course->faculty_id,
                 'proposed_semester' => $validated['proposed_semester'],
-                'signed_form_path' => $pdfPath,
+                'signed_form_path' => $pdfPath,  // Use the verified file path
+                'registration_period_id' => $activeRegistration->id,
                 'status' => 'pending'
             ]);
 
-            \Log::info('Minor registration created:', ['registration' => $minorRegistration]);
+            \Log::info('Minor Registration Created:', [
+                'id' => $minorRegistration->id,
+                'file_path' => $minorRegistration->signed_form_path,
+                'file_exists' => Storage::disk('public')->exists($minorRegistration->signed_form_path)
+            ]);
 
             return redirect()->route('minor-registration.create')
                 ->with('success', 'Your minor course registration has been submitted successfully! Please wait for the Dean\'s approval.');
+
         } catch (\Exception $e) {
-            \Log::error('Error in minor registration:', [
-                'message' => $e->getMessage(),
-                'request_data' => $request->all(),
-                'student' => $student ?? null
+            \Log::error('Minor Registration Error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
-            if (isset($pdfPath) && Storage::disk('public')->exists($pdfPath)) {
-                Storage::disk('public')->delete($pdfPath);
-            }
-
-            return redirect()->route('minor-registration.create')
+            return redirect()->back()
                 ->with('error', 'There was an error submitting your registration: ' . $e->getMessage());
         }
     }
@@ -152,6 +227,15 @@ class MinorRegistrationController extends Controller
             return redirect()->route('dean.minor-requests.index')
                 ->with('error', 'This application has already been processed.');
         }
+
+        // Add detailed debugging
+        \Log::info('Accessing PDF file:', [
+            'file_path' => $minorRegistration->signed_form_path,
+            'storage_path' => Storage::disk('public')->path($minorRegistration->signed_form_path),
+            'public_url' => Storage::disk('public')->url($minorRegistration->signed_form_path),
+            'exists' => Storage::disk('public')->exists($minorRegistration->signed_form_path),
+            'full_path_exists' => file_exists(Storage::disk('public')->path($minorRegistration->signed_form_path))
+        ]);
 
         return view('dean.minor-requests.review', [
             'minorRegistration' => $minorRegistration

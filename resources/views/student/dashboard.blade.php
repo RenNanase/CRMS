@@ -420,11 +420,11 @@
                 <span class="nav-text">Course Registration</span>
             </a>
             <div class="nav-submenu">
-                <a href="{{ route('students.major-registration', ['id' => $student->id]) }}">
+                <a href="{{ route('student.major-registration') }}" class="nav-link">
                     <i class="fas fa-check-circle"></i>
                     <span class="nav-text">Apply Major Courses</span>
                 </a>
-                <a href="{{ route('minor-registration.create', ['id' => $student->id]) }}">
+                <a href="{{ route('student.minor-registration.create') }}" class="nav-link">
                     <i class="fas fa-check-circle"></i>
                     <span class="nav-text">Apply Minor Courses</span>
                 </a>

@@ -24,6 +24,17 @@ use App\Http\Controllers\DeanController;
 use App\Http\Controllers\RegistrationPeriodController;
 use App\Http\Controllers\AcademicPeriodController;
 use App\Http\Controllers\CourseOfferingController;
+use Illuminate\Http\Request;
+
+
+// Add this debug route to check auth status
+Route::get('/check-auth', function () {
+    dd([
+        'authenticated' => auth()->check(),
+        'user' => auth()->user(),
+        'session' => session()->all()
+    ]);
+});
 
 
 // Public routes (accessible without login)
@@ -31,6 +42,17 @@ Route::get('/', [SessionController::class, 'index'])->name('login');
 Route::post('/', [SessionController::class, 'login']);
 Route::get('/logout', [SessionController::class, 'logout'])->name('logout');
 
+
+// Major course registration
+Route::middleware(['auth', 'check.registration:major'])->group(function () {
+    Route::post('/course-request', [CourseRequestController::class, 'store']);
+});
+
+// Minor course registration
+Route::middleware(['auth', 'check.registration:minor'])->group(function () {
+    Route::get('/minor-registration/create', [MinorRegistrationController::class, 'create']);
+    Route::post('/minor-registration', [MinorRegistrationController::class, 'store']);
+});
 
     //Export routes
     Route::get('/timetables/export', [StudentController::class, 'exportTimetable'])->name('timetables.export');
@@ -43,6 +65,7 @@ Route::get('/logout', [SessionController::class, 'logout'])->name('logout');
     Route::get('/api/faculties/{faculty}/programs', function (App\Models\Faculty $faculty) {
         return $faculty->programs;
     })->name('api.faculty.programs');
+Route::get('/api/groups/{courseId}', [App\Http\Controllers\CourseController::class, 'getGroupsByCourse']);
 
 
 
@@ -96,6 +119,23 @@ Route::get('/logout', [SessionController::class, 'logout'])->name('logout');
         Route::get('/admin/academic-periods/{id}/edit', [AcademicPeriodController::class, 'edit'])->name('admin.academic-periods.edit');
         Route::put('/admin/academic-periods/{id}', [AcademicPeriodController::class, 'update'])->name('admin.academic-periods.update');
         Route::delete('/admin/academic-periods/{id}', [AcademicPeriodController::class, 'destroy'])->name('admin.academic-periods.destroy');
+    Route::get('/admin/registration-periods/create', [RegistrationPeriodController::class, 'create'])
+    ->name('admin.registration-periods.create');
+    Route::post('/admin/registration-periods', [RegistrationPeriodController::class, 'store'])
+    ->name('admin.registration-periods.store');
+    Route::get('/admin/registration-periods', [RegistrationPeriodController::class, 'index'])
+    ->name('admin.registration-periods.index');
+    Route::get('registration-periods/create', [RegistrationPeriodController::class, 'create'])
+    ->name('registration-periods.create');
+    Route::get('/admin/registration-periods/{id}/edit', [RegistrationPeriodController::class, 'edit'])
+    ->name('admin.registration-periods.edit');
+    Route::put('/admin/registration-periods/{id}', [RegistrationPeriodController::class, 'update'])
+    ->name('admin.registration-periods.update');
+    Route::delete('/admin/registration-periods/{id}', [RegistrationPeriodController::class, 'destroy'])
+    ->name('admin.registration-periods.destroy');
+
+     // Route::get('registration-periods/create', [RegistrationPeriodController::class, 'create'])->name('registration-periods.create');
+
 
     // Course Registration Routes
 
@@ -114,6 +154,22 @@ Route::get('/logout', [SessionController::class, 'logout'])->name('logout');
     Route::get('/course-prerequisites/{id}', [CourseController::class, 'showPrerequisites'])->name('course.prerequisites');
     Route::get('/students/{id}/status', [StudentController::class, 'getStatus'])->name('students.status');
     Route::get('/courses/{course}/group', [CourseController::class, 'getGroupInfo']);
+
+    //admin major course registration
+    // GET route for viewing course requests
+    Route::get('/course-requests', [CourseRequestController::class, 'index'])
+    ->name('admin.course-requests.index');
+
+    // POST route for creating course requests
+    Route::post('/course-requests', [CourseRequestController::class, 'store'])
+    ->name('course-requests.store');
+
+    // Other course request routes...
+    Route::post('/course-requests/{id}/approve', [CourseRequestController::class, 'approve'])
+    ->name('admin.course-requests.approve');
+    Route::post('/course-requests/{id}/reject', [CourseRequestController::class, 'reject'])
+    ->name('admin.course-requests.reject');
+
 
 
 
@@ -160,44 +216,48 @@ Route::middleware(['auth', 'user.access:student'])->group(function () {
     Route::get('/students/status-enrollment', [StudentController::class, 'showEnrollmentStatus'])->name('students.status-enrollment');
     Route::get('/students/{id}/enrollment-status', [StudentController::class, 'showEnrollmentStatus'])->name('students.enrollment-status');
     Route::post('/students/{id}/courses/register', [StudentController::class, 'registerCourse'])->name('courses.register');
-    Route::get('/students/{id}/major-registration', [StudentController::class, 'showMajorRegistration'])->name('students.major-registration');
-    Route::post('/students/{id}/major-registration', [StudentController::class, 'registerMajorCourses'])->name('students.register-major-courses');
-    Route::get('/students/{id}/minor-registration', [StudentController::class, 'showMinorRegistration'])->name('students.minor-registration');
-    Route::post('/students/{id}/minor-registration', [StudentController::class, 'registerMinorCourses'])->name('students.register-minor-courses');
-    Route::get('/student/register-major-courses', [StudentController::class, 'showMajorRegistration'])->name('student.registerMajorCourses');
-    Route::get('/student/register-minor-courses', [StudentController::class, 'showMinorRegistration'])->name('student.registerMinorCourses');
-    Route::post('/student/register-major-courses/submit', [CourseController::class, 'submitMajorCourses'])->name('student.registerMajorCourses.submit');
-    Route::post('/student/register-minor-courses/submit', [CourseController::class, 'submitMinorCourses'])->name('student.registerMinorCourses.submit');
-    Route::get('/student/register-major-courses/{user_id}', [CourseController::class, 'showMajorCourseRegistration']);
-    Route::get('/student/register-minor-courses/{user_id}', [CourseController::class, 'showMinorCourseRegistration']);
-    Route::get('/profile_photos/{filename}', function ($filename) {$path = storage_path('app/profile_photos/' . $filename);if (!file_exists($path)) {abort(404);}return response()->file($path);})->name('profile.photo')->where('filename', '.*');
-    Route::get('/students/{id}/major-registration', [StudentController::class, 'showMajorRegistration'])->name('students.major-registration');
-    Route::post('/students/{id}/major-registration', [StudentController::class, 'registerMajorCourses'])->name('students.register-major-courses');
-    Route::get('/students/{id}/minor-registration', [StudentController::class, 'showMinorRegistration'])->name('students.minor-registration');
-    Route::post('/students/{id}/minor-registration', [StudentController::class, 'registerMinorCourses'])->name('students.register-minor-courses');
+
+    //new major course registration
+    Route::middleware(['auth', 'user.access:student'])->group(function () {
+        Route::get('/major-registration', [CourseRequestController::class, 'showRegistrationForm'])
+        ->name('student.major-registration');
+        Route::post('/course-requests', [CourseRequestController::class, 'store'])
+        ->name('course-requests.store');
+    });
+
+
     Route::get('/students/status-enrollment', [StudentController::class, 'showEnrollmentStatus'])->name('students.status-enrollment');
     Route::get('/student/enrollment-status', [StudentController::class, 'showEnrollmentStatus'])->name('student.enrollment-status');
     Route::get('/student/timetable', [StudentController::class, 'showTimetable'])->name('student.timetable');
-    Route::get('/minor-registration/create', [MinorRegistrationController::class, 'create'])->name('minor-registration.create');
-    Route::post('/minor-registration', [MinorRegistrationController::class, 'store'])->name('minor-registration.store');
-    Route::post('/minor-registration/generate-pdf', [MinorRegistrationController::class, 'generatePdf'])->name('minor-registration.generate-pdf');
     Route::get('/enrollment-status', [StudentController::class, 'showEnrollmentStatus'])->name('student.enrollment-status');
     Route::get('student/program-structure', [ProgramStructureController::class, 'show'])->name('student.program-structure');
     Route::get('program-structure/download', [ProgramStructureController::class, 'download'])->name('student.program-structure.download');
-    Route::patch('/minor-registration/{minorRegistration}/cancel', [MinorRegistrationController::class, 'cancel'])
+
+    // Minor Registration Routes - Update these routes
+    Route::get('/student/minor-registration', [MinorRegistrationController::class, 'create'])
+    ->name('student.minor-registration.create')
+    ->middleware('check.registration:minor');
+
+    Route::post('/student/minor-registration', [MinorRegistrationController::class, 'store'])
+    ->name('student.minor-registration.store')
+    ->middleware('check.registration:minor');
+
+    Route::post('/student/minor-registration/generate-pdf', [MinorRegistrationController::class, 'generatePdf'])
+    ->name('student.minor-registration.generate-pdf');
+
+    Route::patch('/student/minor-registration/{minorRegistration}/cancel', [MinorRegistrationController::class, 'cancel'])
     ->name('student.minor-registration.cancel');
-    Route::delete('/minor-registration/{minorRegistration}', [MinorRegistrationController::class, 'destroy'])
+
+    Route::delete('/student/minor-registration/{minorRegistration}', [MinorRegistrationController::class, 'destroy'])
     ->name('student.minor-registration.destroy');
 });
 
 
-//api routes
-Route::get('/api/groups/{courseId}', [App\Http\Controllers\CourseController::class, 'getGroupsByCourse']);
+
+
 
 Route::get('/course-prerequisites/{courseId}', [CourseController::class, 'getPrerequisites']);
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/dean/stats', [DeanController::class, 'getStats']);
-});
+
 
 Route::get('/course/{id}', function ($id) {
     $course = Course::find($id);
@@ -216,17 +276,14 @@ Route::get('/course-prerequisites/{courseId}', [CourseController::class, 'getPre
 Route::resource('courses', CourseController::class);
 Route::resource('lecturers', LecturerController::class);
 Route::resource('events', EventController::class);
-Route::resource('minor-registrations', MinorRegistrationController::class);
 Route::resource('program-structures', ProgramStructureController::class);
 Route::resource('academic-periods', AcademicPeriodController::class);
 Route::resource('registration-periods', RegistrationPeriodController::class);
 
 
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/minor-registration/create', [MinorRegistrationController::class, 'create'])->name('minor-registration.create');
-    Route::post('/minor-registration', [MinorRegistrationController::class, 'store'])->name('minor-registration.store');
-});
+
+
 
 
 Route::middleware(['auth', 'is_dean'])->group(function () {
@@ -256,6 +313,106 @@ Route::get('/admin/get-programs/{faculty}', [ProgramStructureController::class, 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/program-structures', [ProgramStructureController::class, 'index'])->name('program-structures.index');
     // ... other routes
+});
+
+// Add this to your web.php routes file
+Route::middleware(['auth', 'check.major.registration'])->group(function () {
+    Route::get('/major-course-registration', [CourseRequestController::class, 'showRegistrationForm'])
+        ->name('student.major-course-registration');
+    Route::post('/course-requests', [CourseRequestController::class, 'store'])
+        ->name('course-requests.store');
+});
+
+// Add this at the bottom of your routes file
+Route::get('/debug-routes', function() {
+    dd(Route::getRoutes()->get('GET'));
+});
+
+// Admin routes
+Route::middleware(['auth', 'user.access:admin'])->group(function () {
+    Route::get('/admin/course-requests', [CourseRequestController::class, 'index'])
+        ->name('admin.course-requests.index');
+});
+
+// Student routes
+Route::middleware(['auth', 'user.access:student'])->group(function () {
+    Route::get('/major-registration', [CourseRequestController::class, 'showRegistrationForm'])
+        ->name('student.major-registration');
+    Route::post('/course-requests', [CourseRequestController::class, 'store'])
+        ->name('course-requests.store');
+});
+
+Route::any('/test-route', function(Request $request) {
+    dd([
+        'method' => $request->method(),
+        'url' => $request->url(),
+        'intended_url' => $request->intended(),
+        'all_routes' => Route::getRoutes()->get($request->method()),
+    ]);
+});
+
+
+// Debug routes
+Route::get('/debug-routes', function () {
+    dd([
+        'GET_routes' => collect(Route::getRoutes()->get('GET'))->map(function ($route) {
+            return [
+                'uri' => $route->uri(),
+                'name' => $route->getName(),
+                'middleware' => $route->middleware()
+            ];
+        }),
+        'auth_status' => auth()->check(),
+        'user' => auth()->user()
+    ]);
+});
+
+Route::get('/debug-files', function () {
+    $files = Storage::disk('public')->files('minor-registrations');
+    $allFiles = Storage::disk('public')->allFiles();
+
+    return [
+        'minor_registration_files' => $files,
+        'all_files' => $allFiles,
+        'storage_path' => storage_path(),
+        'public_path' => public_path(),
+        'storage_link_exists' => file_exists(public_path('storage')),
+    ];
+});
+
+// Temporary debug route
+Route::get('/debug-storage', function () {
+    $path = 'minor-registrations/GZqIzhntWD4DK8R5bNBRznmQWZjr1zRZvin1rp2k.pdf';
+
+    $debug = [
+        'Current Directory' => getcwd(),
+        'Storage Path Details' => [
+            'storage_path()' => storage_path(),
+            'public_path()' => public_path(),
+            'base_path()' => base_path(),
+        ],
+        'Symlink Check' => [
+            'public/storage exists' => file_exists(public_path('storage')),
+            'storage/app/public exists' => file_exists(storage_path('app/public')),
+        ],
+        'File Check' => [
+            'Direct file_exists' => file_exists(storage_path('app/public/' . $path)),
+            'Storage::exists' => Storage::disk('public')->exists($path),
+            'Storage::path' => Storage::disk('public')->path($path),
+            'Real path (storage)' => realpath(storage_path('app/public/' . $path)),
+            'Real path (public)' => realpath(public_path('storage/' . $path)),
+        ],
+        'Directory Contents' => [
+            'storage/app/public/minor-registrations' => is_dir(storage_path('app/public/minor-registrations'))
+                ? array_diff(scandir(storage_path('app/public/minor-registrations')), ['.', '..'])
+                : 'Directory does not exist',
+            'public/storage/minor-registrations' => is_dir(public_path('storage/minor-registrations'))
+                ? array_diff(scandir(public_path('storage/minor-registrations')), ['.', '..'])
+                : 'Directory does not exist',
+        ],
+    ];
+
+    dd($debug);
 });
 
 

@@ -171,18 +171,7 @@ class StudentController extends Controller
             return redirect()->back()->with('error', 'Student profile not found');
         }
     }
-
-    public function showMajorRegistration($id) {
-        $student = Student::findOrFail($id); // Fetch the student using the provided ID
-        $majorCourses = Course::where('type', 'major')->get(); // Fetch major courses from the database
-        $matricNumber = $student->matric_number;
-        // Add logging to check the major courses
-        \Log::info('Major Courses:', $majorCourses->toArray());
-        $studentStatus = $student->is_scholarship;
-        return view('student.major-course-registration', compact('student', 'majorCourses', 'studentStatus', 'matricNumber'));
-    }
-
-
+    
     public function showMinorRegistration($id) {
         $student = Student::findOrFail($id); // Fetch the student using the provided ID
         $minorCourses = Course::where('type', 'minor')->get(); // Fetch minor courses from the database
@@ -196,22 +185,6 @@ class StudentController extends Controller
         return redirect()->route('admin.students.index')->with('success', 'Student deleted successfully.');
     }
 
-    public function registerMajorCourses(Request $request)
-{
-    $request->validate([
-        'major_courses' => 'required|array',
-    ]);
-
-    $student = auth()->user(); // Get the authenticated student
-
-    // Save selected major courses for the student
-    foreach ($request->major_courses as $courseId) {
-        // Logic to save each course for the student
-        $student->courses()->attach($courseId); // Adjust according to your relationship
-    }
-
-    return redirect()->back()->with('success', 'Major courses registered successfully!');
-}
     public function showEnrollmentStatus(Request $request)
     {
         // Get the authenticated user's student record
@@ -327,26 +300,6 @@ class StudentController extends Controller
 
         // Rest of your export code...
     }
-
-public function majorCourseRegistration($id)
-{
-    $student = Student::findOrFail($id);
-
-    // Fetch major courses and add debugging
-    $majorCourses = Course::where('type', 'major')->get();
-
-    \Log::info('Major Courses Found:', [
-        'count' => $majorCourses->count(),
-        'courses' => $majorCourses->toArray()
-    ]);
-
-    return view('student.major-course-registration', [
-        'studentStatus' => $student->is_scholarship,
-        'matricNumber' => $student->matric_number,
-        'student' => $student,
-        'majorCourses' => $majorCourses  // Pass the major courses to the view
-    ]);
-}
 
     public function showProgramStructure()
     {

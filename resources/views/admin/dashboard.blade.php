@@ -412,6 +412,9 @@
                             <i class="fas fa-user-graduate"></i>
                             <span class="nav-text">Academic Period</span>
                         </a>
+            <a href="{{ route('admin.registration-periods.index') }}" class="bg-teal-600 text-white px-4 py-2 rounded-lg">
+                Create Registration Period
+            </a>
             <a href="{{ route('admin.students.index') }}">
                 <i class="fas fa-user-graduate"></i>
                 <span class="nav-text">Student Management</span>
