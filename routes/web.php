@@ -131,7 +131,7 @@ Route::get('/api/groups/{courseId}', [App\Http\Controllers\CourseController::cla
     ->name('admin.registration-periods.edit');
     Route::put('/admin/registration-periods/{registrationPeriod}', [RegistrationPeriodController::class, 'update'])
     ->name('admin.registration-periods.update');
-    Route::delete('/admin/registration-periods/{id}', [RegistrationPeriodController::class, 'destroy'])
+    Route::delete('/admin/registration-periods/{registrationPeriod}', [RegistrationPeriodController::class, 'destroy'])
     ->name('admin.registration-periods.destroy');
 
      // Route::get('registration-periods/create', [RegistrationPeriodController::class, 'create'])->name('registration-periods.create');
@@ -218,12 +218,13 @@ Route::middleware(['auth', 'user.access:student'])->group(function () {
     Route::post('/students/{id}/courses/register', [StudentController::class, 'registerCourse'])->name('courses.register');
 
     //new major course registration
-    Route::middleware(['auth', 'user.access:student'])->group(function () {
-        Route::get('/major-registration', [CourseRequestController::class, 'showRegistrationForm'])
-        ->name('student.major-registration');
-        Route::post('/course-requests', [CourseRequestController::class, 'store'])
-        ->name('course-requests.store');
-    });
+    Route::get('/major-registration', [CourseRequestController::class, 'showRegistrationForm'])
+    ->name('student.major-registration');
+    // Only protect the store route with registration period check
+    Route::post('/course-requests', [CourseRequestController::class, 'store'])
+    ->middleware('check.major.registration')
+    ->name('course-requests.store');
+
 
 
     Route::get('/students/status-enrollment', [StudentController::class, 'showEnrollmentStatus'])->name('students.status-enrollment');

@@ -19,6 +19,8 @@ class CheckMajorRegistrationPeriod
             if ($request->ajax()) {
                 return response()->json(['error' => 'Major course registration is currently closed.'], 403);
             }
+
+            // Redirect to dashboard with error message
             return redirect()->route('student.dashboard')
                 ->with('error', 'Major course registration is currently closed.');
         }

@@ -41,19 +41,9 @@ class RegistrationPeriodController extends Controller
 
     private function calculateStatus($period, $now)
     {
-        // For testing: Mock current time to be after the end date
-        // $now = Carbon::parse('2025-01-08 14:00:00')->setTimezone('UTC'); // Uncomment this line to test
-
-        $now = Carbon::now()->setTimezone('UTC');
-        $startDate = Carbon::parse($period->start_date)->setTimezone('UTC');
-        $endDate = Carbon::parse($period->end_date)->setTimezone('UTC');
-
-        // Debug timestamps
-        \Log::info('Status Check:');
-        \Log::info('Current time (UTC): ' . $now->format('Y-m-d H:i:s'));
-        \Log::info('Start date (UTC): ' . $startDate->format('Y-m-d H:i:s'));
-        \Log::info('End date (UTC): ' . $endDate->format('Y-m-d H:i:s'));
-        \Log::info('Is after end date? ' . ($now->gt($endDate) ? 'Yes' : 'No'));
+        $now = Carbon::now()->setTimezone('Asia/Brunei');
+        $startDate = Carbon::parse($period->start_date)->setTimezone('Asia/Brunei');
+        $endDate = Carbon::parse($period->end_date)->setTimezone('Asia/Brunei');
 
         if ($now->timestamp > $endDate->timestamp) {
             return 'closed';
@@ -128,5 +118,13 @@ class RegistrationPeriodController extends Controller
     {
         $academicPeriods = AcademicPeriod::orderBy('start_date')->get();
         return view('admin.registration-periods.edit', compact('registrationPeriod', 'academicPeriods'));
+    }
+
+    public function destroy(RegistrationPeriod $registrationPeriod)
+    {
+        $registrationPeriod->delete();
+
+        return redirect()->route('admin.registration-periods.index')
+        ->with('success', 'Registration period deleted successfully');
     }
 }

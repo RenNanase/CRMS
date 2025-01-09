@@ -13,7 +13,7 @@ use App\Models\MajorCourseRegistration;
 use Illuminate\Support\Facades\Auth;
 use App\Models\RegistrationPeriod;
 use App\Models\Course;
-
+use Illuminate\Http\JsonResponse;
 
 class CourseRequestController extends Controller
 {
@@ -197,42 +197,44 @@ class CourseRequestController extends Controller
     {
         // Check registration period first
         $activeMajorPeriod = RegistrationPeriod::where('type', 'major')
-            ->where('start_date', '<=', now())
+        ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
             ->first();
 
-        if (!$activeMajorPeriod) {
-            return redirect()->route('student.dashboard')
-                ->with('error', 'Major course registration is currently closed.');
-        }
-
+        // Get student data
         $student = Auth::user()->student;
         $studentStatus = $student->is_scholarship;
         $matricNumber = $student->matric_number;
 
-        // Get all major courses
-        $majorCourses = Course::where('type', 'major')->get();
+        // Only fetch and process courses if registration is open
+        if ($activeMajorPeriod) {
+            // Get all major courses
+            $majorCourses = Course::where('type', 'major')->get();
 
-        // Get student's existing course requests
-        $existingRequests = CourseRequest::where('student_id', $student->id)
-            ->whereIn('status', ['pending', 'approved'])
-            ->with('course') // Eager load course relationship
-            ->get();
+            // Get student's existing course requests
+            $existingRequests = CourseRequest::where('student_id', $student->id)
+                ->whereIn('status', ['pending', 'approved'])
+                ->with('course') // Eager load course relationship
+                ->get();
 
-        // Mark courses that student has already requested
-        $majorCourses = $majorCourses->map(function ($course) use ($existingRequests) {
-            $courseRequest = $existingRequests->where('course_id', $course->id)->first();
+            // Mark courses that student has already requested
+            $majorCourses = $majorCourses->map(function ($course) use ($existingRequests) {
+                $courseRequest = $existingRequests->where('course_id', $course->id)->first();
 
-            $course->request_status = $courseRequest?->status;
-            $course->is_registered = (bool)$courseRequest;
-            $course->status_message = match($courseRequest?->status) {
-                'pending' => '[Pending Approval]',
-                'approved' => '[Already Registered]',
-                default => ''
-            };
+                $course->request_status = $courseRequest?->status;
+                $course->is_registered = (bool)$courseRequest;
+                $course->status_message = match ($courseRequest?->status) {
+                    'pending' => '[Pending Approval]',
+                    'approved' => '[Already Registered]',
+                    default => ''
+                };
 
-            return $course;
-        });
+                return $course;
+            });
+        } else {
+            // If registration is closed, send empty collection
+            $majorCourses = collect();
+        }
 
         return view('student.major-course-registration', compact(
             'student',

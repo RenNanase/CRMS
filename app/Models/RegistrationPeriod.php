@@ -28,7 +28,7 @@ class RegistrationPeriod extends Model
 
     public function scopeMajor($query)
     {
-        return $query->where('type', self::TYPE_MAJOR);
+        return $query->where('type', 'major');
     }
 
     public function scopeMinor($query)
@@ -40,5 +40,11 @@ class RegistrationPeriod extends Model
     {
         return $query->where('start_date', '<=', now())
                     ->where('end_date', '>=', now());
+    }
+
+    public function isActive()
+    {
+        $now = now();
+        return $now >= $this->start_date && $now <= $this->end_date;
     }
 }
