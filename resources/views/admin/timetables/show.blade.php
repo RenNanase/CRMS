@@ -60,34 +60,36 @@
 
             <!-- Filter Section -->
             <div class="p-4 bg-teal-50 border-b border-teal-200">
-                <form action="{{ route('admin.timetables.show') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-<div>
-                        <label for="course_code" class="block text-sm font-medium text-teal-700">Course Code</label>
-                        <select name="course_code" id="course_code"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
-                            <option value="">All Courses</option>
-                            @foreach($courses as $course)
-                            <option value="{{ $course->course_code }}" {{ request('course_code')==$course->course_code ? 'selected' : '' }}>
-                                {{ $course->course_code }}
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label for="course_type" class="block text-sm font-medium text-teal-700">Course Type</label>
-                        <select name="course_type" id="course_type"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
-                            <option value="">All Types</option>
-                            <option value="Major">Major</option>
-                            <option value="Minor">Minor</option>
-                        </select>
-                    </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md transition duration-150">
-                            Apply Filters
-                        </button>
-                    </div>
-                </form>
+<form action="{{ route('admin.timetables.show') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div>
+        <label for="course_code" class="block text-sm font-medium text-teal-700">Course Code</label>
+        <select name="course_code" id="course_code"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+            <option value="">All Courses</option>
+            @foreach($courses as $course)
+            <option value="{{ $course->course_code }}" {{ request('course_code')==$course->course_code ? 'selected' : ''
+                }}>
+                {{ $course->course_code }}
+            </option>
+            @endforeach
+        </select>
+    </div>
+    <div>
+        <label for="course_type" class="block text-sm font-medium text-teal-700">Course Type</label>
+        <select name="type" id="course_type"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+            <option value="">All Types</option>
+            <option value="Major" {{ request('type')=='Major' ? 'selected' : '' }}>Major</option>
+            <option value="Minor" {{ request('type')=='Minor' ? 'selected' : '' }}>Minor</option>
+        </select>
+    </div>
+    <div class="flex items-end">
+        <button type="submit"
+            class="w-full bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md transition duration-150">
+            Apply Filters
+        </button>
+    </div>
+</form>
             </div>
 
             @if($timetables->isEmpty())

@@ -10,13 +10,18 @@ use Carbon\Carbon;
 
 class AdminTimetableController extends Controller
 {
+
+
     public function index(Request $request)
     {
         $query = Timetable::query();
 
-        if ($request->filled('type', 'course_code')) {
-            $query->where('type', $request->type);
+        if ($request->filled('course_code')) {
             $query->where('course_code', $request->course_code);
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
         }
 
         $timetables = $query->get();
