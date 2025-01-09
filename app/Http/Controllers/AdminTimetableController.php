@@ -77,19 +77,25 @@ class AdminTimetableController extends Controller
         }
     }
 
-    public function showTimetables()
+    public function showTimetables(Request $request)
     {
         $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
         $courses = Course::orderBy('course_code')->get();
 
-        try {
-            // Get all timetables without any filtering
-            $timetables = Timetable::with(['course', 'lecturer'])
-                ->orderBy('day_of_week')
-                ->orderBy('start_time')
-                ->get();
+        $query = Timetable::with(['course', 'lecturer']);
 
-            // Return the admin timetable view
+        if ($request->filled('course_code')) {
+            $query->where('course_code', $request->course_code);
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $timetables = $query->orderBy('day_of_week')->orderBy('start_time')->get();
+
+        try {
+            // Return the admin timetable view with filtered timetables
             return view('admin.timetables.show', compact('timetables', 'days', 'courses'));
         } catch (\Exception $e) {
             \Log::error('Error in admin showTimetables:', [

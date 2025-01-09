@@ -124,11 +124,7 @@
         {{ ucfirst($period->status) }}
     </span>
 </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                            Now: {{ Carbon\Carbon::now()->format('Y-m-d H:i:s') }}<br>
-                            Start: {{ $period->start_date->format('Y-m-d H:i:s') }}<br>
-                            End: {{ $period->end_date->format('Y-m-d H:i:s') }}
-                        </td>
+
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex justify-end space-x-2">
                                 <a href="{{ route('admin.registration-periods.edit', $period) }}"

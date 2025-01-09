@@ -200,5 +200,19 @@
             @endif
         </div>
     </div>
+    <script>
+        document.getElementById('course_code').addEventListener('change', function() {
+            const selectedCourse = this.value;
+            const currentUrl = new URL(window.location.href);
+
+            if (selectedCourse) {
+                currentUrl.searchParams.set('course_code', selectedCourse);
+            } else {
+                currentUrl.searchParams.delete('course_code');
+            }
+
+            window.location.href = currentUrl.toString();
+        });
+    </script>
 </body>
 </html>

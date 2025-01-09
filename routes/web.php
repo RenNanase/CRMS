@@ -127,9 +127,9 @@ Route::get('/api/groups/{courseId}', [App\Http\Controllers\CourseController::cla
     ->name('admin.registration-periods.index');
     Route::get('registration-periods/create', [RegistrationPeriodController::class, 'create'])
     ->name('registration-periods.create');
-    Route::get('/admin/registration-periods/{id}/edit', [RegistrationPeriodController::class, 'edit'])
+    Route::get('/admin/registration-periods/{registrationPeriod}/edit', [RegistrationPeriodController::class, 'edit'])
     ->name('admin.registration-periods.edit');
-    Route::put('/admin/registration-periods/{id}', [RegistrationPeriodController::class, 'update'])
+    Route::put('/admin/registration-periods/{registrationPeriod}', [RegistrationPeriodController::class, 'update'])
     ->name('admin.registration-periods.update');
     Route::delete('/admin/registration-periods/{id}', [RegistrationPeriodController::class, 'destroy'])
     ->name('admin.registration-periods.destroy');

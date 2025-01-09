@@ -123,4 +123,10 @@ class RegistrationPeriodController extends Controller
             return 'closed';
         }
     }
+
+    public function edit(RegistrationPeriod $registrationPeriod)
+    {
+        $academicPeriods = AcademicPeriod::orderBy('start_date')->get();
+        return view('admin.registration-periods.edit', compact('registrationPeriod', 'academicPeriods'));
+    }
 }
