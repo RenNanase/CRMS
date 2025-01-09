@@ -27,14 +27,14 @@
     <div class="container mx-auto px-4 py-8">
         <!-- Navigation Buttons -->
         <div class="flex space-x-4 mb-4">
-            <a href="{{ route('admin.dashboard') }}" 
+            <a href="{{ route('admin.dashboard') }}"
                class="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition duration-150">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                 </svg>
                 Dashboard
             </a>
-            <button onclick="window.history.back()" 
+            <button onclick="window.history.back()"
                     class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-150">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
@@ -61,18 +61,21 @@
             <!-- Filter Section -->
             <div class="p-4 bg-teal-50 border-b border-teal-200">
                 <form action="{{ route('admin.timetables.show') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label for="semester" class="block text-sm font-medium text-teal-700">Semester</label>
-                        <select name="semester" id="semester" 
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
-                            <option value="">All Semesters</option>
-                            <option value="1">Semester 1</option>
-                            <option value="2">Semester 2</option>
+<div>
+                        <label for="course_code" class="block text-sm font-medium text-teal-700">Course Code</label>
+                        <select name="course_code" id="course_code"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+                            <option value="">All Courses</option>
+                            @foreach($courses as $course)
+                            <option value="{{ $course->course_code }}" {{ request('course_code')==$course->course_code ? 'selected' : '' }}>
+                                {{ $course->course_code }}
+                            </option>
+                            @endforeach
                         </select>
                     </div>
                     <div>
                         <label for="course_type" class="block text-sm font-medium text-teal-700">Course Type</label>
-                        <select name="course_type" id="course_type" 
+                        <select name="course_type" id="course_type"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
                             <option value="">All Types</option>
                             <option value="Major">Major</option>
@@ -123,7 +126,7 @@
                                                             <div class="text-teal-600">[{{ $timetable->course_code }}]</div>
                                                             <div class="text-teal-600">{{ $timetable->place }}</div>
                                                             <div class="text-teal-600">{{ $timetable->lecturer->name }}</div>
-                                                            
+
                                                             <!-- Tooltip -->
                                                             <div class="hidden group-hover:block absolute z-30 left-full top-0 ml-2 w-64 bg-white p-3 rounded-md shadow-lg border border-teal-200">
                                                                 <div class="space-y-2">
@@ -159,7 +162,7 @@
                                                             <div class="text-teal-600">[{{ $timetable->course_code }}]</div>
                                                             <div class="text-teal-600">{{ $timetable->place }}</div>
                                                             <div class="text-teal-600">{{ $timetable->lecturer->name }}</div>
-                                                            
+
                                                             <!-- Tooltip -->
                                                             <div class="hidden group-hover:block absolute z-30 left-full top-0 ml-2 w-64 bg-white p-3 rounded-md shadow-lg border border-teal-200">
                                                                 <div class="space-y-2">
@@ -195,5 +198,19 @@
             @endif
         </div>
     </div>
+    <script>
+        document.getElementById('course_code').addEventListener('change', function() {
+            const selectedCourse = this.value;
+            const currentUrl = new URL(window.location.href);
+
+            if (selectedCourse) {
+                currentUrl.searchParams.set('course_code', selectedCourse);
+            } else {
+                currentUrl.searchParams.delete('course_code');
+            }
+
+            window.location.href = currentUrl.toString();
+        });
+    </script>
 </body>
 </html>

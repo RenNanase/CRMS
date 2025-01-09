@@ -135,13 +135,15 @@
                             class="w-full rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-teal-500 bg-white px-4 py-2.5">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Program</label>
-                        <input type="text" name="programme" value="{{ old('programme', $student->program_name) }}"
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Programme</label>
+                        <input type="text" name="programme"
+                        value="{{ old('programme', $student->program->name) }}"
                             class="w-full rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-teal-500 bg-white px-4 py-2.5">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Batch</label>
-                        <input type="text" name="batch" value="{{ old('batch', $student->batch) }}"
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Academic Year</label>
+                        <input type="text" name="academic_year"
+                        value="{{ old('academic_year', $student->academic_year) }}"
                             class="w-full rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-teal-500 bg-white px-4 py-2.5">
                     </div>
                 </div>

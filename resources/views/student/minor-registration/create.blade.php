@@ -112,7 +112,7 @@
                                 <div class="space-y-2">
                                     <p class="text-teal-700"><span class="font-medium">Course Code:</span> {{ $existingRegistration->course_code }}</p>
                                     <p class="text-teal-700"><span class="font-medium">Course Name:</span> {{ $existingRegistration->course_name }}</p>
-                                    <p class="text-teal-700"><span class="font-medium">Faculty:</span> {{ $existingRegistration->faculty }}</p>
+                                    <p class="text-teal-700"><span class="font-medium">Faculty:</span> {{ $existingRegistration->student->program->name }}</p>
                                 </div>
                                 <div class="space-y-2">
                                     <p class="text-teal-700">
