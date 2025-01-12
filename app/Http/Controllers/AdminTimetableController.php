@@ -79,7 +79,7 @@ class AdminTimetableController extends Controller
 
     public function showTimetables(Request $request)
     {
-        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'];
         $courses = Course::orderBy('course_code')->get();
 
         $query = Timetable::with(['course', 'lecturer']);

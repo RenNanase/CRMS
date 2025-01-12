@@ -1,3 +1,7 @@
+@php
+    use Carbon\Carbon;
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -107,41 +111,56 @@
                                         <!-- Replace the course display section with this -->
 <td class="px-2 py-2 border-r border-teal-100 min-w-[120px]">
     @foreach ($timetables as $timetable)
-    @if ($timetable->day_of_week == $day && $timetable->start_time <= $timeSlot1 && $timetable->end_time > $timeSlot1)
-        <div class="@if($timetable->source === 'minor')
+        @if ($timetable->day_of_week == $day &&
+            Carbon::parse($timetable->start_time)->format('H:i') <= $timeSlot1 &&
+            Carbon::parse($timetable->end_time)->format('H:i') > $timeSlot1)
+            <div class="@if($timetable->source === 'minor')
                         bg-indigo-100 hover:bg-indigo-200
                     @else
                         bg-teal-100 hover:bg-teal-200
                     @endif
                     p-2 rounded text-sm group relative transition-colors">
 
-            <div class="font-medium @if($timetable->source === 'minor') text-indigo-700 @else text-teal-700 @endif">
-                {{ $timetable->course_name }}
-                <span class="text-xs ml-1">
-                    (@if($timetable->source === 'minor')Minor @else Major @endif)
-                </span>
-            </div>
-            <div class="@if($timetable->source === 'minor') text-indigo-600 @else text-teal-600 @endif text-xs">
-                {{ $timetable->place }}
-            </div>
-
-            <!-- Tooltip -->
-            <div
-                class="hidden group-hover:block absolute z-30 left-full top-0 ml-2 w-48 bg-white p-2 rounded-md shadow-lg border border-gray-200">
-                <p class="font-medium @if($timetable->source === 'minor') text-indigo-700 @else text-teal-700 @endif">
+                <div class="font-medium @if($timetable->source === 'minor') text-indigo-700 @else text-teal-700 @endif">
                     {{ $timetable->course_name }}
-                </p>
-                <p class="text-gray-600">{{ $timetable->course_code }}</p>
-                <p class="@if($timetable->source === 'minor') text-indigo-600 @else text-teal-600 @endif">
+                    <span class="text-xs ml-1">
+                        (@if($timetable->source === 'minor')Minor @else Major @endif)
+                    </span>
+                </div>
+
+                <!-- Show group only for major courses -->
+                @if($timetable->source === 'major' && isset($timetable->group_name))
+                <div class="text-teal-600 text-xs font-medium">
+                    Group {{ $timetable->group_name }}
+                </div>
+                @endif
+
+                <div class="@if($timetable->source === 'minor') text-indigo-600 @else text-teal-600 @endif text-xs">
                     {{ $timetable->place }}
-                </p>
-                <p class="text-gray-600">
-                    {{ $timetable->start_time }} - {{ $timetable->end_time }}
-                </p>
+                </div>
+
+                <!-- Tooltip with more details -->
+                <div class="hidden group-hover:block absolute z-30 left-full top-0 ml-2 w-48 bg-white p-2 rounded-md shadow-lg border border-gray-200">
+                    <p class="font-medium @if($timetable->source === 'minor') text-indigo-700 @else text-teal-700 @endif">
+                        {{ $timetable->course_name }}
+                    </p>
+                    <p class="text-gray-600">{{ $timetable->course_code }}</p>
+                    @if($timetable->source === 'major' && isset($timetable->group_name))
+                    <p class="text-teal-600 font-medium">
+                        Group {{ $timetable->group_name }}
+                    </p>
+                    @endif
+                    <p class="@if($timetable->source === 'minor') text-indigo-600 @else text-teal-600 @endif">
+                        {{ $timetable->place }}
+                    </p>
+                    <p class="text-gray-600">
+                        {{ Carbon::parse($timetable->start_time)->format('H:i') }} -
+                        {{ Carbon::parse($timetable->end_time)->format('H:i') }}
+                    </p>
+                </div>
             </div>
-        </div>
         @endif
-        @endforeach
+    @endforeach
 </td>
                     @endfor
                     </tr>

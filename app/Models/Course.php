@@ -52,5 +52,8 @@ public function course()
 {
     return $this->belongsTo(Course::class, 'course_id');
 }
-
+    public function timetable()
+    {
+        return $this->hasOne(Timetable::class);
+    }
 }

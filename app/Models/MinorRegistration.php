@@ -31,7 +31,7 @@ class MinorRegistration extends Model
         'dean_comments',
         'dean_name',
         'dean_signature',
-        'recommendation_date'
+        'recommendation_date',
     ];
 
     protected $casts = [
@@ -93,5 +93,9 @@ class MinorRegistration extends Model
     public function scopeRejected($query)
     {
         return $query->where('status', 'rejected');
+    }
+    public function group()
+    {
+        return $this->belongsTo(Group::class);
     }
 }

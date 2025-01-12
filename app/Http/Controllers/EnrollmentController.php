@@ -6,9 +6,59 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\CourseRequest;
 use App\Models\Timetable;
+use App\Models\Group;
+use App\Models\Enrollment;
 
 class EnrollmentController extends Controller
 {
+
+    public function store(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'student_id' => 'required|exists:students,id',
+                'group_id' => 'required|exists:groups,id',
+                'course_id' => 'required|exists:courses,id',
+            ]);
+
+            // Check if group is full
+            $group = Group::findOrFail($request->group_id);
+            if ($group->enrollments()->count() >= $group->max_students) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This group is already full'
+                ], 400);
+            }
+
+            // Check for existing enrollment
+            $existingEnrollment = Enrollment::where([
+                'student_id' => $request->student_id,
+                'course_id' => $request->course_id,
+            ])->first();
+
+            if ($existingEnrollment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Student is already enrolled in this course'
+                ], 400);
+            }
+
+            $enrollment = Enrollment::create($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Enrollment successful',
+                'enrollment' => $enrollment
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Enrollment failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     public function approved()
     {
         $approvedEnrollments = DB::table('course_requests')
@@ -123,34 +173,5 @@ class EnrollmentController extends Controller
         return view('student.status-enrollments', compact('courseRequests', 'minorRegistrations'));
     }
 
-
-
-
-    public function enroll(Request $request)
-    {
-        // Validate the incoming request
-        $request->validate([
-            'date' => 'required|date',
-            'time' => 'required|time',
-            'place' => 'required|string',
-        ]);
-
-        // Enrollment logic here...
-        // Ensure you have the student ID and course details
-        $studentId = auth()->id(); // Assuming you're using authentication
-        $courseCode = $request->input('course_code'); // Adjust as necessary
-        $courseName = $request->input('course_name'); // Adjust as necessary
-
-        $timetable = new Timetable();
-        $timetable->student_id = $studentId;
-        $timetable->course_code = $courseCode;
-        $timetable->course_name = $courseName;
-        $timetable->date = $request->input('date');
-        $timetable->time = $request->input('time');
-        $timetable->place = $request->input('place');
-        $timetable->save();
-
-        // Redirect or return response
-    }
 
 }

@@ -26,6 +26,10 @@ class CourseRequest extends Model
         'prerequisite_check',
         'remarks',
         'registration_period_id',
+        'group_name',
+        'day_of_week',
+        'time',
+        'place',
     ];
 
     public function course()
@@ -42,4 +46,9 @@ public function registrationPeriod()
 {
     return $this->belongsTo(RegistrationPeriod::class, 'registration_period_id');
 }
+    public function student()
+    {
+        return $this->belongsTo(Student::class);
+    }
+
 }

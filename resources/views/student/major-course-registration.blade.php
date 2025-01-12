@@ -98,13 +98,11 @@
                         <!-- Fee Receipt Section -->
                         <div id="fee-receipt" class="form-group">
                             <label for="fee_receipt" class="block text-sm font-semibold text-teal-700 mb-2">Upload Fee
-                                Receipt</label>
+                                Receipt @if(!$studentStatus)<span class="text-red-500">*</span>@endif</label>
                             <div class="flex items-center justify-center w-full">
-                                <label class="w-full flex flex-col items-center px-4 py-6 bg-teal-50 text-teal-700 rounded-lg tracking-wide border-2 border-dashed border-teal-200 cursor-pointer hover:bg-t[...]
-                                        <svg class=" w-8 h-8" fill="currentColor" xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 20 20">
-                                    <path
-                                        d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
+                                <label class="w-full flex flex-col items-center px-4 py-6 bg-teal-50 text-teal-700 rounded-lg tracking-wide border-2 border-dashed border-teal-200 cursor-pointer hover:bg-t[...]">
+                                    <svg class="w-8 h-8" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
                                     </svg>
                                     <span class="mt-2 text-sm">Select a file</span>
                                     <input type="file" name="fee_receipt" id="fee_receipt" class="hidden"
@@ -114,6 +112,7 @@
                             <p class="mt-2 text-sm text-gray-600">Accepted file types: PDF, JPG, JPEG, PNG</p>
                             @if(!$studentStatus)
                             <p class="mt-2 text-sm text-red-500">*Required for non-scholarship students</p>
+                            <p id="fee-receipt-warning" class="mt-2 text-sm text-red-500 hidden">Please upload your fee receipt before submitting.</p>
                             @endif
                         </div>
 
@@ -151,23 +150,35 @@
                             </div>
                         </div>
 
+                        <!-- Add Group Selection (initially hidden) -->
+                        <div id="group-selection" class="form-group mt-4" style="display: none;">
+                            <label class="block text-sm font-semibold text-teal-700 mb-2">Available Groups</label>
+                            <select name="group_id" id="group_id" required
+                                class="w-full px-4 py-2 border border-teal-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200">
+                                <option value="">-- Select a group --</option>
+                            </select>
+
+                            <!-- Group Details Card -->
+                            <div id="group-details" class="mt-4 bg-teal-50 p-4 rounded-lg hidden">
+                                <h4 class="text-sm font-semibold text-teal-700 mb-2">Group Details</h4>
+                                <div class="space-y-2 text-sm text-teal-600">
+                                    <p>Schedule: <span id="group-schedule"></span></p>
+                                    <p>Location: <span id="group-location"></span></p>
+                                    <p class="flex items-center">
+                                        Capacity:
+                                        <span id="group-capacity" class="ml-2"></span>
+                                        <div class="ml-2 w-32 bg-teal-200 rounded-full h-2">
+                                            <div id="capacity-bar" class="bg-teal-600 rounded-full h-2" style="width: 0%"></div>
+                                        </div>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label class="block text-sm font-semibold text-teal-700 mb-2">Course Code</label>
                             <input type="text" id="courseCode" name="course_code"
                                 class="w-full px-4 py-2 bg-gray-50 border border-teal-200 rounded-lg" readonly />
-                        </div>
-
-                        <div id="group-info" class="form-group">
-                            <label class="block text-sm font-semibold text-teal-700 mb-2">Course Group</label>
-                            <div id="group-display" class="p-4 bg-teal-50 rounded-lg text-teal-700">
-                                No group selected
-                            </div>
-                            <input type="hidden" name="group_id" id="group_id" value="">
-                        </div>
-
-                        <div id="prerequisites" class="bg-teal-50 p-4 rounded-lg">
-                            <h4 class="text-sm font-semibold text-teal-700 mb-2">Prerequisites</h4>
-                            <div class="text-teal-600">Loading prerequisites...</div>
                         </div>
 
                         <button type="submit"
@@ -181,93 +192,149 @@
     </div>
 
     <script>
-        document.getElementById('course').addEventListener('change', function() {
-            const courseId = this.value;
-            const groupDisplay = document.getElementById('group-display');
-            const courseCodeInput = document.getElementById('courseCode');
+        document.addEventListener('DOMContentLoaded', function() {
+            const courseSelect = document.getElementById('course');
+            if (courseSelect) {
+                courseSelect.addEventListener('change', function() {
+                    const courseId = this.value;
+                    const selectedOption = this.options[this.selectedIndex];
+                    const courseCodeInput = document.getElementById('courseCode');
+                    const groupSelection = document.getElementById('group-selection');
+                    const groupDetails = document.getElementById('group-details');
 
-            // Reset displays when no course is selected
-            if (!courseId) {
-                groupDisplay.textContent = 'No group selected';
-                document.getElementById('group_id').value = '';
-                document.getElementById('prerequisites').innerHTML = '';
-                courseCodeInput.value = '';
-                return;
-            }
+                    // Set course code immediately from the data attribute
+                    courseCodeInput.value = selectedOption.getAttribute('data-code');
 
-            // Set course code
-            const selectedOption = this.options[this.selectedIndex];
-            const courseCode = selectedOption.getAttribute('data-code');
-            courseCodeInput.value = courseCode;
-
-            // Fetch group information
-            fetch(`/courses/${courseId}/group`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    document.getElementById('group_id').value = data.group_id;
-                    groupDisplay.textContent = data.group_name || 'Group ' + data.group_id;
-                })
-                .catch(error => {
-                    console.error('Error fetching group:', error);
-                    groupDisplay.innerHTML = '<span class="text-red-500">Error loading group information</span>';
-                });
-
-            // Fetch prerequisites
-            fetch(`/course-prerequisites/${courseId}`)
-                .then(response => response.json())
-                .then(data => {
-                    const prerequisitesDiv = document.getElementById('prerequisites');
-                    prerequisitesDiv.innerHTML = '';
-
-                    if (data.error) {
-                        prerequisitesDiv.innerHTML = `<p class="text-red-500">${data.error}</p>`;
+                    if (!courseId) {
+                        groupSelection.style.display = 'none';
+                        groupDetails.classList.add('hidden');
                         return;
                     }
 
-                    if (data.prerequisites && data.prerequisites.length > 0) {
-                        const list = document.createElement('ul');
-                        list.className = 'list-disc pl-5 space-y-2';
-
-                        data.prerequisites.forEach(prerequisite => {
-                            const listItem = document.createElement('li');
-                            listItem.textContent = prerequisite.course_name;
-                            list.appendChild(listItem);
-                        });
-
-                        prerequisitesDiv.appendChild(list);
-                    } else {
-                        prerequisitesDiv.innerHTML = `<p>No prerequisites for this course.</p>`;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching prerequisites:', error);
-                    document.getElementById('prerequisites').innerHTML =
-                        '<p class="text-red-500">Error loading prerequisites</p>';
+                    // Show group selection and fetch groups
+                    groupSelection.style.display = 'block';
+                    fetchGroups(courseId);
                 });
-        });
-
-        // Add this new code for file upload handling
-        document.getElementById('fee_receipt').addEventListener('change', function(e) {
-            const fileName = e.target.files[0]?.name;
-            if (fileName) {
-                const fileLabel = this.previousElementSibling;
-                fileLabel.textContent = fileName;
             }
-        });
 
-        // Toggle fee receipt visibility based on student status
-        document.getElementById('request_type').addEventListener('change', function() {
-            const feeReceiptDiv = document.getElementById('fee-receipt');
+            // Group select change event - keep existing group details functionality
+            const groupSelect = document.getElementById('group_id');
+            if (groupSelect) {
+                groupSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const groupDetails = document.getElementById('group-details');
+
+                    if (!this.value) {
+                        groupDetails.classList.add('hidden');
+                        return;
+                    }
+
+                    // Show group details
+                    groupDetails.classList.remove('hidden');
+
+                    // Update details
+                    document.getElementById('group-schedule').textContent =
+                        `${selectedOption.dataset.day} at ${selectedOption.dataset.time}`;
+                    document.getElementById('group-location').textContent =
+                        selectedOption.dataset.location;
+
+                    const enrolled = parseInt(selectedOption.dataset.enrolled);
+                    const capacity = parseInt(selectedOption.dataset.capacity);
+                    document.getElementById('group-capacity').textContent =
+                        `${enrolled}/${capacity} students`;
+
+                    // Update capacity bar
+                    const percentage = (enrolled / capacity) * 100;
+                    document.getElementById('capacity-bar').style.width = `${percentage}%`;
+                });
+            }
+
+            function fetchGroups(courseId) {
+                if (!courseId) return;
+
+                console.log('Fetching groups for course:', courseId);
+
+                fetch(`/groups/course/${courseId}`)
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Received groups data:', data);
+                        const groupSelect = document.getElementById('group_id');
+                        groupSelect.innerHTML = '<option value="">-- Select a group --</option>';
+
+                        if (data.success && data.groups && data.groups.length > 0) {
+                            data.groups.forEach(group => {
+                                const option = document.createElement('option');
+                                option.value = group.id;
+                                option.dataset.day = group.day_of_week;
+                                option.dataset.time = group.time;
+                                option.dataset.location = group.place;
+                                option.dataset.capacity = group.max_students;
+                                option.dataset.enrolled = group.current_students;
+                                option.textContent = `Group ${group.name} (${group.current_students}/${group.max_students} students)`;
+
+                                if (group.is_full) {
+                                    option.disabled = true;
+                                    option.textContent += ' (FULL)';
+                                }
+
+                                groupSelect.appendChild(option);
+                            });
+                        } else {
+                            groupSelect.innerHTML += '<option disabled>No groups available for this course</option>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching groups:', error);
+                        const groupSelect = document.getElementById('group_id');
+                        groupSelect.innerHTML = '<option value="">Error loading groups</option>';
+                    });
+            }
+
+            // Fee Receipt Handling
+            const studentStatus = {{ $studentStatus ? 'true' : 'false' }};
             const feeReceiptInput = document.getElementById('fee_receipt');
+            const submitButton = document.querySelector('button[type="submit"]');
+            const warningMessage = document.getElementById('fee-receipt-warning');
+            const form = document.querySelector('form');
 
-            if (!{{ $studentStatus ? 'true' : 'false' }}) {
-                feeReceiptDiv.style.display = 'block';
-                feeReceiptInput.required = true;
+            // File upload preview
+            if (feeReceiptInput) {
+                feeReceiptInput.addEventListener('change', function(e) {
+                    const fileName = e.target.files[0]?.name;
+                    if (fileName) {
+                        const fileLabel = this.previousElementSibling;
+                        fileLabel.textContent = fileName;
+                        warningMessage.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Form submission validation
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    if (!studentStatus) {
+                        if (!feeReceiptInput || !feeReceiptInput.files.length) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            warningMessage.classList.remove('hidden');
+                            // Scroll to the warning message
+                            warningMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            return false;
+                        }
+                    }
+                });
+            }
+
+            // Remove the required attribute from hidden input
+            if (feeReceiptInput && !studentStatus) {
+                // Remove required attribute but keep validation in JavaScript
+                feeReceiptInput.removeAttribute('required');
             }
         });
     </script>

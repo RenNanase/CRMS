@@ -117,6 +117,15 @@
         </div>
 
         <!-- Main Content -->
+        <div class="mb-4">
+            <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+                Create Group
+            </button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#enrollStudentModal">
+                Enroll Student
+            </button>
+        </div>
+
         <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-teal-100">
             <div class="overflow-x-auto">
                 <table class="w-full">
@@ -139,7 +148,7 @@
                             <td class="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-900">{{ $request->matric_number }}</td>
                             <td class="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-900">{{ $request->course ? $request->course->course_name : 'N/A' }}</td>
                             <td class="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-900">{{ $request->course_code }}</td>
-                            <td class="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-900">{{ $request->group ? $request->group->group_name : 'N/A' }}</td>
+                            <td class="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-900">{{ $request->group ? $request->group->name : 'N/A' }}</td>
                             <td class="px-6 py-4 text-center whitespace-nowrap">
                                 @if($request->student_status === 'scholarship')
                                     <span class="text-gray-500 italic">Not Applicable</span>
@@ -206,6 +215,16 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Create Group Modal -->
+    <div class="modal fade" id="createGroupModal">
+        <!-- Modal content from previous code -->
+    </div>
+
+    <!-- Enroll Student Modal -->
+    <div class="modal fade" id="enrollStudentModal">
+        <!-- Modal content from previous code -->
     </div>
 
     <script>

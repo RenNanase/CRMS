@@ -171,7 +171,7 @@ class StudentController extends Controller
             return redirect()->back()->with('error', 'Student profile not found');
         }
     }
-    
+
     public function showMinorRegistration($id) {
         $student = Student::findOrFail($id); // Fetch the student using the provided ID
         $minorCourses = Course::where('type', 'minor')->get(); // Fetch minor courses from the database
@@ -239,43 +239,89 @@ class StudentController extends Controller
     {
         $student = Auth::user()->student;
         $studentId = $student->id;
-        // Get approved major courses from course_requests
-        $majorTimetables = Timetable::whereIn('course_code', function ($query) use ($studentId) {
-            $query->select('course_code')
-            ->from('course_requests')
-            ->where('student_id', $studentId)
-                ->where('status', 'approved');
-        })->get()->map(function ($timetable) {
-            // Add source attribute for major courses
-            $timetable->source = 'major';
-            return $timetable;
-        });
 
-        // Get approved minor courses from minor_registrations
-        $minorTimetables = Timetable::whereIn('course_code', function ($query) use ($studentId) {
-            $query->select('course_code')
-            ->from('minor_registrations')
-            ->where('student_id', $studentId)
-                ->where('status', 'approved');
-        })->get()->map(function ($timetable) {
-            // Add source attribute for minor courses
-            $timetable->source = 'minor';
-            return $timetable;
-        });
 
-        // Combine both collections
-        $timetables = $majorTimetables->concat($minorTimetables);
+        try {
+            // Get approved major courses with groups
+            $majorTimetables = CourseRequest::with(['course', 'group'])
+                ->where('student_id', $studentId)
+                ->where('status', 'approved')
+                ->get()
+                ->map(function ($courseRequest) {
+                    // Debug log for group data
+                    \Log::info('Processing course request:', [
+                        'course_code' => $courseRequest->course_code,
+                        'group_id' => $courseRequest->group_id,
+                        'group' => $courseRequest->group
+                    ]);
 
-        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                    // Safely access group properties with null coalescing
+                    return (object)[
+                        'course_code' => $courseRequest->course_code,
+                        'course_name' => $courseRequest->course->course_name ?? 'Unknown Course',
+                        'day_of_week' => $courseRequest->group?->day_of_week ?? 'TBA',
+                        'start_time' => $courseRequest->group?->time ?? '08:00:00',
+                        'end_time' => $courseRequest->group?->time ?
+                            date('H:i:s', strtotime($courseRequest->group->time . ' +2 hours')) : '10:00:00',
+                        'place' => $courseRequest->group?->place ?? 'TBA',
+                        'group_name' => $courseRequest->group?->name ?? null,
+                        'source' => 'major'
+                    ];
+                });
 
-        // Add debug logging
-        \Log::info('Timetables:', [
-            'major_count' => $majorTimetables->count(),
-            'minor_count' => $minorTimetables->count(),
-            'total_count' => $timetables->count()
-        ]);
 
-        return view('student.timetables.show', compact('timetables', 'days'));
+            // Get approved minor courses
+            $minorTimetables = MinorRegistration::with(['course'])
+                ->where('student_id', $studentId)
+                ->where('status', 'approved')
+                ->get()
+                ->map(function ($registration) {
+                                        // Debug log for group data
+                    \Log::info('Processing course request:', [
+                        'course_code' => $registration->course_code,
+                        'group_id' => $registration->group_id,
+                        'group_data' => $registration->group
+
+                    ]);
+                    return (object)[
+                        'course_code' => $registration->course_code,
+                        'course_name' => $registration->course_name,
+                        'day_of_week' => 'Monday', // You might want to add these fields to minor_registrations table
+                        'start_time' => '08:00:00',
+                        'end_time' => '10:00:00',
+                        'place' => $registration->place,
+                        'source' => 'minor'
+                    ];
+                });
+
+            // Debug logging
+            \Log::info('Timetables Debug:', [
+                'student_id' => $studentId,
+                'major_count' => $majorTimetables->count(),
+                'minor_count' => $minorTimetables->count(),
+                'major_samples' => $majorTimetables->map(function ($t) {
+                    return [
+                        'course_code' => $t->course_code,
+                        'day_of_week' => $t->day_of_week,
+                        'start_time' => $t->start_time,
+                        'group_name' => $t->group_name
+                    ];
+                })->toArray()
+            ]);
+
+            // Combine both collections
+            $timetables = $majorTimetables->concat($minorTimetables);
+
+            $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+            return view('student.timetables.show', compact('timetables', 'days'));
+        } catch (\Exception $e) {
+            \Log::error('Error in showTimetable:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->with('error', 'Unable to load timetable. Please try again later.');
+        }
     }
 
     public function exportTimetable()

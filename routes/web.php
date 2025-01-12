@@ -25,6 +25,9 @@ use App\Http\Controllers\RegistrationPeriodController;
 use App\Http\Controllers\AcademicPeriodController;
 use App\Http\Controllers\CourseOfferingController;
 use Illuminate\Http\Request;
+use App\Http\Controllers\GroupController;
+use App\Models\Group;
+
 
 
 // Add this debug route to check auth status
@@ -170,7 +173,10 @@ Route::get('/api/groups/{courseId}', [App\Http\Controllers\CourseController::cla
     Route::post('/course-requests/{id}/reject', [CourseRequestController::class, 'reject'])
     ->name('admin.course-requests.reject');
 
-
+    // Group routes
+    Route::get('/groups', [GroupController::class, 'index'])->name('admin.groups.index');
+    Route::post('/groups', [GroupController::class, 'store'])->name('admin.groups.store');
+    Route::get('/get-form-data', [GroupController::class, 'getFormData'])->name('admin.get-form-data');
 
 
     });
@@ -224,9 +230,12 @@ Route::middleware(['auth', 'user.access:student'])->group(function () {
     Route::post('/course-requests', [CourseRequestController::class, 'store'])
     ->middleware('check.major.registration')
     ->name('course-requests.store');
+    Route::get('/groups/course/{courseId}', [GroupController::class, 'getGroupsByCourse'])->name('groups.by-course');
 
+    Route::get('/groups/course/{courseId}', [GroupController::class, 'getGroupsByCourse'])
+    ->name('groups.by-course');
 
-
+    Route::post('/enrollments', [EnrollmentController::class, 'store'])->name('enrollments.store');
     Route::get('/students/status-enrollment', [StudentController::class, 'showEnrollmentStatus'])->name('students.status-enrollment');
     Route::get('/student/enrollment-status', [StudentController::class, 'showEnrollmentStatus'])->name('student.enrollment-status');
     Route::get('/student/timetable', [StudentController::class, 'showTimetable'])->name('student.timetable');

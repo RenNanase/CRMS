@@ -408,12 +408,17 @@
                 <i class="fas fa-home"></i>
                 <span class="nav-text">Home</span>
             </a>
+<a href="{{ route('admin.groups.index') }}" class="nav-link">
+    <i class="fas fa-users"></i>
+    <span class="nav-text">Manage Groups</span>
+</a>
             <a href="{{ route('admin.academic-periods.index') }}">
                             <i class="fas fa-user-graduate"></i>
                             <span class="nav-text">Academic Period</span>
                         </a>
-            <a href="{{ route('admin.registration-periods.index') }}" class="bg-teal-600 text-white px-4 py-2 rounded-lg">
-                Create Registration Period
+            <a href="{{ route('admin.registration-periods.index') }}" >
+                <i class="fas fa-calendar-alt"></i>
+                <span class="nav-text">Registration Period</span>
             </a>
             <a href="{{ route('admin.students.index') }}">
                 <i class="fas fa-user-graduate"></i>
