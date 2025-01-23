@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'is_dean' => \App\Http\Middleware\IsDean::class, // Add this line
+            'isLecturer' => \App\Http\Middleware\IsLecturer::class, // Add this line
             'check.major.registration' => \App\Http\Middleware\CheckMajorRegistrationPeriod::class, //major
             'check.registration' => \App\Http\Middleware\CheckRegistrationPeriod::class, //minor
         ]);

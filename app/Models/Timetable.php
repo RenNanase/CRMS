@@ -35,4 +35,13 @@ class Timetable extends Model
     {
         return $this->belongsTo(Student::class);
     }
+    public function courseRequest()
+    {
+        return $this->hasMany(CourseRequest::class, 'course_code', 'course_code');
+    }
+
+    public function minorRegistration()
+    {
+        return $this->hasMany(MinorRegistration::class, 'course_code', 'course_code');
+    }
 }

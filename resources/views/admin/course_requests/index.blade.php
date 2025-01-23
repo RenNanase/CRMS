@@ -358,6 +358,8 @@
     document.querySelector('#rejectModal > div').addEventListener('click', function(e) {
         e.stopPropagation();
     });
-    </script>
-</body>
-</html>
+
+</script>
+    </body>
+
+    </html>

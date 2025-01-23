@@ -19,6 +19,14 @@ class Course extends Model
         'faculty_id',
         'type' //major or minor
     ];
+
+    public function students()
+    {
+        return $this->belongsToMany(Student::class, 'course_student')
+        ->withPivot(['status', 'group_id', 'semester', 'academic_year'])
+        ->withTimestamps();
+    }
+
     public function group()
     {
         return $this->belongsTo(Group::class);

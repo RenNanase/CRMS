@@ -7,161 +7,126 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Group Management</title>
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <style>
-        .bg-teal-100 {
-            background-color: #B2F5EA;
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        teal: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            600: '#0d9488',
+                            700: '#0f766e'
+                        }
+                    }
+                }
+            }
         }
-
-        .bg-teal-600 {
-            background-color: #319795;
-        }
-
-        .text-teal-700 {
-            color: #285E61;
-        }
-
-        .hover\:bg-teal-700:hover {
-            background-color: #2C7A7B;
-        }
-
-        .btn-outline-danger {
-            color: #E53E3E;
-            border-color: #E53E3E;
-        }
-
-        .btn-outline-danger:hover {
-            color: #fff;
-            background-color: #E53E3E;
-            border-color: #E53E3E;
-        }
-
-        .progress-bar {
-            transition: width 0.3s ease;
-            background-color: #319795;
-        }
-
-        .card {
-            border-radius: 0.5rem;
-            border: none;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .table th {
-            font-weight: 600;
-            border-bottom: 2px solid #E2E8F0;
-        }
-
-        .table td {
-            vertical-align: middle;
-        }
-
-        .btn-teal {
-            background-color: #319795;
-            color: white;
-        }
-
-        .btn-teal:hover {
-            background-color: #2C7A7B;
-            color: white;
-        }
-
-        .modal-header {
-            background-color: #319795;
-            color: white;
-        }
-
-        .form-label {
-            color: #285E61;
-        }
-    </style>
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body class="bg-light">
-    <div class="container py-4">
-
-<!-- Navigation Buttons -->
-    <div class="flex space-x-4 mb-4">
-        <a href="{{ route('admin.dashboard') }}"
-            class="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition duration-150">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                    d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-            </svg>
-            Dashboard
-        </a>
-        <button onclick="window.history.back()"
-            class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-150">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd"
-                    d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-                    clip-rule="evenodd" />
-            </svg>
-            Back
-        </button>
-    </div>
-
-        <div class="row mb-4">
-            <div class="col">
-                <h2 class="text-teal-700 font-bold text-2xl">Group Management</h2>
-                <button type="button" class="btn btn-teal" data-bs-toggle="modal" data-bs-target="#createGroupModal">
-                    <i class="fas fa-plus-circle me-2"></i>Create New Group
-                </button>
-            </div>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Navigation Buttons -->
+        <div class="flex space-x-4 mb-4">
+            <a href="{{ route('admin.dashboard') }}"
+                class="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition duration-150">
+                <i class="fas fa-home mr-2"></i>
+                Dashboard
+            </a>
+            <button onclick="window.history.back()"
+                class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-150">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back
+            </button>
         </div>
 
-        <!-- Groups Table -->
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <table class="table table-hover">
-                    <thead class="bg-teal-100">
+        <!-- Main Content Card -->
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <!-- Header Section -->
+            <div class="bg-teal-600 text-white px-6 py-4 flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold">Group Management</h2>
+                    <p class="text-teal-100">Manage your course groups and schedules</p>
+                </div>
+                <button type="button"
+                    class="bg-teal-500 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded transition duration-150"
+                    data-bs-toggle="modal" data-bs-target="#createGroupModal">
+                    <i class="fas fa-plus-circle mr-2"></i>
+                    Create New Group
+                </button>
+            </div>
+
+            <!-- Table Section -->
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-teal-50 border-b border-teal-200">
                         <tr>
-                            <th>Course Code</th>
-                            <th>Course Name</th>
-                            <th>Group Name</th>
-                            <th>Day</th>
-                            <th>Time</th>
-                            <th>Place</th>
-                            <th>Capacity</th>
-                            <th>Actions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">
+                                Course Code</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">
+                                Course Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">
+                                Group Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">
+                                Day</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">
+                                Time</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">
+                                Place</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">
+                                Capacity</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">
+                                Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="bg-white divide-y divide-teal-200">
                         @forelse($groups as $group)
-                        <tr>
-                            <td>{{ $group->course->course_code }}</td>
-                            <td>{{ $group->course->course_name }}</td>
-                            <td>{{ $group->name }}</td>
-                            <td>{{ $group->day_of_week }}</td>
-                            <td>{{ date('h:i A', strtotime($group->time)) }}</td>
-                            <td>{{ $group->course->place }}</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="me-2">
-                                        {{ $group->getCurrentEnrollmentCount() }}/{{ $group->max_students }}
-                                    </div>
-                                    <div class="progress flex-grow-1" style="height: 8px;">
-                                        <div class="progress-bar bg-teal-500"
-                                             role="progressbar"
-                                             style="width: {{ ($group->getCurrentEnrollmentCount() / $group->max_students) * 100 }}%">
+                        <tr class="hover:bg-teal-50 transition duration-200">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{{
+                                $group->course->course_code }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $group->course->course_name
+                                }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{{ $group->name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $group->day_of_week }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ date('h:i A',
+                                strtotime($group->time)) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $group->course->place }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex-grow bg-teal-100 rounded-full h-2 max-w-[100px]">
+                                        <div class="bg-teal-600 h-2 rounded-full"
+                                            style="width: {{ ($group->enrollments_count / $group->max_students) * 100 }}%">
                                         </div>
                                     </div>
+                                    <span class="text-sm text-gray-600">
+                                        {{ $group->enrollments_count }}/{{ $group->max_students }}
+                                    </span>
                                 </div>
                             </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteGroup({{ $group->id }})">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <button
+                                    class="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1 rounded-md text-sm transition duration-150"
+                                    onclick="deleteGroup({{ $group->id }})">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="text-center py-4 text-gray-500">No groups found</td>
+                            <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                                <i class="fas fa-inbox text-4xl mb-3"></i>
+                                <p>No groups found</p>
+                            </td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -170,52 +135,71 @@
         </div>
 
         <!-- Create Group Modal -->
-        <div class="modal fade" id="createGroupModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Create New Group</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal fade" id="createGroupModal" tabindex="-1" aria-labelledby="createGroupModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-lg shadow-xl">
+                    <div class="modal-header bg-teal-600 text-white px-6 py-4 rounded-t-lg">
+                        <h5 class="text-xl font-bold">Create New Group</h5>
+                        <button type="button" class="text-white hover:text-teal-100" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
-                    <div class="modal-body">
-                        <form id="createGroupForm">
-                            <div class="mb-3">
-                                <label for="course_id" class="form-label">Course</label>
-                                <select class="form-select" id="course_id" name="course_id" required>
+                    <div class="modal-body p-6">
+                        <form id="createGroupForm" class="space-y-4">
+                            <div>
+                                <label for="course_id"
+                                    class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                                <select
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                                    id="course_id" name="course_id" required>
                                     <option value="">Select Course</option>
                                 </select>
                             </div>
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Group Name</label>
-                                <input type="text" class="form-control" id="name" name="name" required>
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Group
+                                    Name</label>
+                                <input type="text"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                                    id="name" name="name" required>
                             </div>
-                            <div class="mb-3">
-                                <label for="max_students" class="form-label">Maximum Students</label>
-                                <input type="number" class="form-control" id="max_students" name="max_students" required
-                                    min="1">
+                            <div>
+                                <label for="max_students" class="block text-sm font-medium text-gray-700 mb-1">Maximum
+                                    Students</label>
+                                <input type="number"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                                    id="max_students" name="max_students" required min="1">
                             </div>
-                            <div class="mb-3">
-                                <label for="day_of_week" class="form-label">Day of Week</label>
-                                <select class="form-select" id="day_of_week" name="day_of_week" required>
+                            <div>
+                                <label for="day_of_week" class="block text-sm font-medium text-gray-700 mb-1">Day of
+                                    Week</label>
+                                <select
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                                    id="day_of_week" name="day_of_week" required disabled>
                                     <option value="">Select Day</option>
                                     <option value="Monday">Monday</option>
                                     <option value="Tuesday">Tuesday</option>
                                     <option value="Wednesday">Wednesday</option>
                                     <option value="Thursday">Thursday</option>
-                                    <option value="Friday">Saturday</option>
+                                    <option value="Friday">Friday</option>
                                 </select>
-                                <small class="text-muted">Auto-filled based on course timetable</small>
+                                <p class="mt-1 text-sm text-gray-500">Auto-filled based on course timetable</p>
                             </div>
-                            <div class="mb-3">
-                                <label for="time" class="form-label">Time</label>
-                                <input type="time" class="form-control" id="time" name="time" required>
-                                <small class="text-muted">Auto-filled based on course timetable</small>
+                            <div>
+                                <label for="time" class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                                <input type="time"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                                    id="time" name="time" required disabled>
+                                <p class="mt-1 text-sm text-gray-500">Auto-filled based on course timetable</p>
                             </div>
                         </form>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-teal" onclick="createGroup()">Create Group</button>
+                    <div class="modal-footer bg-gray-50 px-6 py-4 rounded-b-lg">
+                        <button type="button"
+                            class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition duration-150"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <button type="button"
+                            class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition duration-150"
+                            onclick="createGroup()">Create Group</button>
                     </div>
                 </div>
             </div>
@@ -287,20 +271,101 @@
                 });
         }
 
+        function showAlert(message, type = 'success') {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            Toast.fire({
+                icon: type,
+                title: message
+            });
+        }
+
+        function deleteGroup(groupId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0d9488',
+                cancelButtonColor: '#dc2626',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/admin/groups/${groupId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire(
+                                'Deleted!',
+                                'Group has been deleted.',
+                                'success'
+                            ).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                'Error!',
+                                data.message || 'Failed to delete group',
+                                'error'
+                            );
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire(
+                            'Error!',
+                            'Failed to delete group',
+                            'error'
+                        );
+                    });
+                }
+            });
+        }
+
         function createGroup() {
-            // Get the selected course option
             const courseSelect = document.getElementById('course_id');
             const selectedOption = courseSelect.options[courseSelect.selectedIndex];
+
+            if (!courseSelect.value) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Information',
+                    text: 'Please select a course first!'
+                });
+                return;
+            }
 
             const formData = {
                 course_id: courseSelect.value,
                 name: document.getElementById('name').value,
                 max_students: document.getElementById('max_students').value,
                 day_of_week: selectedOption.dataset.day,
-                time: selectedOption.dataset.start, // Use the start_time directly from timetable
+                time: selectedOption.dataset.start,
             };
 
-            console.log('Sending form data:', formData); // Debug log
+            // Show loading state
+            Swal.fire({
+                title: 'Creating group...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
 
             fetch('/admin/groups', {
                 method: 'POST',
@@ -313,57 +378,35 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showAlert('Group created successfully!', 'success');
-                    $('#createGroupModal').modal('hide');
-                    document.getElementById('createGroupForm').reset();
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Group created successfully!',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#createGroupModal').modal('hide');
+                        document.getElementById('createGroupForm').reset();
+                        location.reload();
+                    });
                 } else {
-                    showAlert(data.message || 'Failed to create group', 'error');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: data.message || 'Failed to create group',
+                        footer: 'Please check the information and try again'
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showAlert('Failed to create group', 'error');
-            });
-        }
-
-        function deleteGroup(groupId) {
-            if (confirm('Are you sure you want to delete this group?')) {
-                fetch(`/admin/groups/${groupId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('Group deleted successfully!', 'success');
-                        location.reload();
-                    } else {
-                        showAlert(data.message || 'Failed to delete group', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('Failed to delete group', 'error');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Failed to create group',
+                    footer: 'Please try again later'
                 });
-            }
-        }
-
-        function showAlert(message, type = 'success') {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
-            alertDiv.role = 'alert';
-            alertDiv.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.body.appendChild(alertDiv);
-
-            setTimeout(() => {
-                alertDiv.remove();
-            }, 3000);
+            });
         }
 
         function fetchGroups(courseId) {
@@ -420,6 +463,14 @@
                     fetchGroups(this.value);
                 });
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize all Bootstrap modals
+            var myModalEl = document.getElementById('createGroupModal')
+            var modal = new bootstrap.Modal(myModalEl)
+
+            // Rest of your existing DOMContentLoaded code...
         });
     </script>
 </body>

@@ -21,7 +21,11 @@ use Illuminate\Support\Facades\Log;
 use App\Models\MinorRegistration;
 use App\Models\News;
 use App\Models\ProgramStructure;
+use Barryvdh\DomPDF\Facade\Pdf;
+
+
 class StudentController extends Controller
+
 {
     // Show the student dashboard
     public function dashboard()
@@ -240,79 +244,45 @@ class StudentController extends Controller
         $student = Auth::user()->student;
         $studentId = $student->id;
 
-
         try {
-            // Get approved major courses with groups
-            $majorTimetables = CourseRequest::with(['course', 'group'])
+            // Get approved major courses with timetables
+            $majorTimetables = CourseRequest::with(['course', 'timetable']) // Change 'group' to 'timetable'
                 ->where('student_id', $studentId)
                 ->where('status', 'approved')
                 ->get()
                 ->map(function ($courseRequest) {
-                    // Debug log for group data
-                    \Log::info('Processing course request:', [
-                        'course_code' => $courseRequest->course_code,
-                        'group_id' => $courseRequest->group_id,
-                        'group' => $courseRequest->group
-                    ]);
-
-                    // Safely access group properties with null coalescing
                     return (object)[
                         'course_code' => $courseRequest->course_code,
                         'course_name' => $courseRequest->course->course_name ?? 'Unknown Course',
-                        'day_of_week' => $courseRequest->group?->day_of_week ?? 'TBA',
-                        'start_time' => $courseRequest->group?->time ?? '08:00:00',
-                        'end_time' => $courseRequest->group?->time ?
-                            date('H:i:s', strtotime($courseRequest->group->time . ' +2 hours')) : '10:00:00',
-                        'place' => $courseRequest->group?->place ?? 'TBA',
-                        'group_name' => $courseRequest->group?->name ?? null,
+                        'day_of_week' => $courseRequest->timetable?->day_of_week ?? 'TBA',
+                        'start_time' => $courseRequest->timetable?->start_time ?? '08:00:00',
+                        'end_time' => $courseRequest->timetable?->end_time ?? '10:00:00',
+                        'place' => $courseRequest->timetable?->place ?? 'TBA',
                         'source' => 'major'
                     ];
                 });
 
-
             // Get approved minor courses
-            $minorTimetables = MinorRegistration::with(['course'])
+            $minorTimetables = MinorRegistration::with(['course', 'timetable']) // Add 'timetable'
                 ->where('student_id', $studentId)
                 ->where('status', 'approved')
                 ->get()
                 ->map(function ($registration) {
-                                        // Debug log for group data
-                    \Log::info('Processing course request:', [
-                        'course_code' => $registration->course_code,
-                        'group_id' => $registration->group_id,
-                        'group_data' => $registration->group
-
-                    ]);
                     return (object)[
                         'course_code' => $registration->course_code,
                         'course_name' => $registration->course_name,
-                        'day_of_week' => 'Monday', // You might want to add these fields to minor_registrations table
-                        'start_time' => '08:00:00',
-                        'end_time' => '10:00:00',
-                        'place' => $registration->place,
+                        'day_of_week' => $registration->timetable?->day_of_week ?? 'Monday',
+                        'start_time' => $registration->timetable?->start_time ?? '08:00:00',
+                        'end_time' => $registration->timetable?->end_time ?? '10:00:00',
+                        'place' => $registration->timetable?->place ?? 'TBA',
                         'source' => 'minor'
                     ];
                 });
 
-            // Debug logging
-            \Log::info('Timetables Debug:', [
-                'student_id' => $studentId,
-                'major_count' => $majorTimetables->count(),
-                'minor_count' => $minorTimetables->count(),
-                'major_samples' => $majorTimetables->map(function ($t) {
-                    return [
-                        'course_code' => $t->course_code,
-                        'day_of_week' => $t->day_of_week,
-                        'start_time' => $t->start_time,
-                        'group_name' => $t->group_name
-                    ];
-                })->toArray()
-            ]);
-
             // Combine both collections
             $timetables = $majorTimetables->concat($minorTimetables);
 
-            $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'];
 
             return view('student.timetables.show', compact('timetables', 'days'));
         } catch (\Exception $e) {
@@ -326,25 +296,65 @@ class StudentController extends Controller
 
     public function exportTimetable()
     {
-        $student_id = Auth::id();
+        $student_id = Auth::user()->student->id;
 
-        // Fetch approved major course codes
-        $approvedMajorCourses = CourseRequest::where('student_id', $student_id)
+        // Fetch approved major courses with their timetables
+        $majorTimetables = CourseRequest::with(['course', 'timetable']) // Change 'group' to 'timetable'
+            ->where('student_id', $student_id)
             ->where('status', 'approved')
-            ->pluck('course_code');
+            ->get()
+            ->map(function ($courseRequest) {
+                return (object)[
+                    'course_code' => $courseRequest->course_code,
+                    'course_name' => $courseRequest->course->course_name ?? 'Unknown Course',
+                    'day_of_week' => $courseRequest->timetable?->day_of_week ?? 'TBA',
+                    'start_time' => $courseRequest->timetable?->start_time ?? '08:00:00',
+                    'end_time' => $courseRequest->timetable?->end_time ?? '10:00:00',
+                    'place' => $courseRequest->timetable?->place ?? 'TBA',
+                    'source' => 'major'
+                ];
+            });
 
-        // Fetch approved minor course codes
-        $approvedMinorCourses = MinorRegistration::where('student_id', $student_id)
+        // Fetch approved minor courses with their timetables
+        $minorTimetables = MinorRegistration::with(['course', 'timetable']) // Add 'timetable'
+            ->where('student_id', $student_id)
             ->where('status', 'approved')
-            ->pluck('course_code');
+            ->get()
+            ->map(function ($registration) {
+                return (object)[
+                    'course_code' => $registration->course_code,
+                    'course_name' => $registration->course_name,
+                    'day_of_week' => $registration->timetable?->day_of_week ?? 'Monday',
+                    'start_time' => $registration->timetable?->start_time ?? '08:00:00',
+                    'end_time' => $registration->timetable?->end_time ?? '10:00:00',
+                    'place' => $registration->timetable?->place ?? 'TBA',
+                    'source' => 'minor'
+                ];
+            });
 
-        // Merge both course codes
-        $allApprovedCourses = $approvedMajorCourses->concat($approvedMinorCourses);
 
-        // Retrieve timetables based on all approved course codes
-        $timetables = Timetable::whereIn('course_code', $allApprovedCourses)->get();
+        // Combine both collections
+        $timetables = $majorTimetables->concat($minorTimetables);
 
-        // Rest of your export code...
+        // Generate PDF
+        $pdf = new Dompdf();
+        $options = new Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isPhpEnabled', true);
+        $pdf->setOptions($options);
+
+        // Get the HTML content from the view
+        $html = view('student.timetables.export', compact('timetables'))->render();
+
+        $pdf->loadHtml($html);
+        $pdf->setPaper('A4', 'landscape');
+        $pdf->render();
+
+        // Generate filename with timestamp
+        $filename = Auth::user()->name . '_timetable_' . now()->format('Y-m-d_H-i-s') . '.pdf';
+
+        // Download the PDF
+        return $pdf->stream($filename);
     }
 
     public function showProgramStructure()
@@ -362,5 +372,45 @@ class StudentController extends Controller
         return view('student.program-structure', compact('programStructure', 'student'));
     }
 
+    public function generatePdf(Request $request)
+    {
+        try {
+            // Validate the request data
+            $request->validate([
+                'course_id' => 'required|exists:courses,id',
+                'cgpa' => 'required|numeric|min:0|max:4.00',
+                'proposed_semester' => 'required|string',
+                'semester1_gpa' => 'required|numeric|min:0|max:4.00',
+                'semester2_gpa' => 'required|numeric|min:0|max:4.00',
+                'semester3_gpa' => 'required|numeric|min:0|max:4.00',
+                'semester4_gpa' => 'required|numeric|min:0|max:4.00',
+            ]);
 
+            $student = auth()->user()->student;
+            $selectedCourse = Course::find($request->course_id);
+
+
+            // Load the PDF view with data
+            $pdf = PDF::loadView('student.minor-registration.form-pdf', [
+                'student' => $student,
+                'selectedCourse' => $selectedCourse,
+                'request' => $request
+            ]);
+
+            // Configure PDF settings
+            $pdf->setPaper('a4', 'portrait');
+            $pdf->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isPhpEnabled' => true,
+                'isRemoteEnabled' => true,
+                'defaultFont' => 'Arial'
+            ]);
+
+            // Return the PDF for download
+            return $pdf->download('minor-registration-form.pdf');
+        } catch (\Exception $e) {
+            Log::error('PDF Generation Error: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
+        }
+    }
 }

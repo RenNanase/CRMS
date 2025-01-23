@@ -28,6 +28,8 @@ class RedirectIfAuthenticated
                         return redirect()->route('student.dashboard');
                     case 'faculty_dean':
                         return redirect()->route('dean.dashboard');
+                    case 'lecturer':
+                        return redirect()->route('lecturer.dashboard');
                     default:
                         return redirect('/home');
                 }

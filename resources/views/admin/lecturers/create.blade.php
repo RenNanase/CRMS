@@ -74,7 +74,7 @@
 
             <!-- Form Section -->
             <div class="p-8">
-                <form action="{{ route('lecturers.store') }}" method="POST" class="space-y-8">
+                <form action="{{ route('admin.lecturers.store') }}" method="POST" class="space-y-8">
                     @csrf
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <!-- Personal Information -->
@@ -155,6 +155,36 @@
                         </div>
                     </div>
 
+                    <!-- Add this before the Submit Button -->
+                    <div class="border-t border-teal-200 pt-8 mt-8">
+                        <h3 class="text-xl font-semibold text-teal-700 border-b-2 border-teal-200 pb-3 mb-6">Account Credentials</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="relative">
+                                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                                <div class="relative">
+                                    <input type="password" name="password" id="password" required
+                                           class="w-full h-12 px-4 rounded-lg border-2 border-teal-200 shadow-sm focus:border-teal-500 focus:ring focus:ring-teal-200 focus:ring-opacity-50 transition duration-200">
+                                    <button type="button" onclick="togglePasswordVisibility('password')"
+                                            class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                        <i class="fas fa-eye text-gray-400"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="relative">
+                                <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                                <div class="relative">
+                                    <input type="password" name="password_confirmation" id="password_confirmation" required
+                                           class="w-full h-12 px-4 rounded-lg border-2 border-teal-200 shadow-sm focus:border-teal-500 focus:ring focus:ring-teal-200 focus:ring-opacity-50 transition duration-200">
+                                    <button type="button" onclick="togglePasswordVisibility('password_confirmation')"
+                                            class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                        <i class="fas fa-eye text-gray-400"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Submit Button -->
                     <div class="flex justify-end pt-8">
                         <button type="submit"
@@ -166,5 +196,23 @@
             </div>
         </div>
     </div>
+
+    <!-- Add this JavaScript at the bottom of your file -->
+    <script>
+        function togglePasswordVisibility(fieldId) {
+            const field = document.getElementById(fieldId);
+            const button = field.nextElementSibling.querySelector('i');
+
+            if (field.type === 'password') {
+                field.type = 'text';
+                button.classList.remove('fa-eye');
+                button.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                button.classList.remove('fa-eye-slash');
+                button.classList.add('fa-eye');
+            }
+        }
+    </script>
 </body>
 </html>

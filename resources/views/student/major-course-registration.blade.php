@@ -69,10 +69,9 @@
                     <div class="grid md:grid-cols-2 gap-6 mb-8">
                         <div class="bg-teal-50 p-4 rounded-lg">
                             <label class="block text-sm font-semibold text-teal-700 mb-2">Student Status</label>
-                            <p class="text-lg text-teal-900">{{ $studentStatus ? 'Scholarship' : 'Non-Scholarship' }}
-                            </p>
+                            <p class="text-lg text-teal-900">{{ $student->scholarship_status }}</p>
                             <input type="hidden" name="student_status"
-                                value="{{ $studentStatus ? 'scholarship' : 'non-scholarship' }}" />
+                                value="{{ strtolower($student->scholarship_status) }}" />
                         </div>
 
                         <div class="bg-teal-50 p-4 rounded-lg">
@@ -336,7 +335,50 @@
                 // Remove required attribute but keep validation in JavaScript
                 feeReceiptInput.removeAttribute('required');
             }
-        });
+       // Initialize Echo
+            window.Echo = new Echo({
+            broadcaster: 'pusher',
+            key: process.env.MIX_PUSHER_APP_KEY,
+            cluster: process.env.MIX_PUSHER_APP_CLUSTER,
+            forceTLS: true
+            });
+
+            // Listen for enrollment updates
+            Echo.channel('enrollments')
+            .listen('EnrollmentUpdated', (e) => {
+            updateGroupCapacity(e.groupId, e.currentCount, e.maxStudents);
+            });
+
+            function updateGroupCapacity(groupId, currentCount, maxStudents) {
+            // Update select option
+            const groupSelect = document.getElementById('group_id');
+            const option = groupSelect.querySelector(`option[value="${groupId}"]`);
+            if (option) {
+            option.dataset.enrolled = currentCount;
+            option.dataset.capacity = maxStudents;
+            option.textContent = `Group ${option.dataset.name} (${currentCount}/${maxStudents} students)`;
+
+            // Disable if full
+            if (currentCount >= maxStudents) {
+            option.disabled = true;
+            option.textContent += ' (FULL)';
+            } else {
+            option.disabled = false;
+            }
+            }
+
+            // Update group details if currently selected
+            if (groupSelect.value === groupId.toString()) {
+            const capacityText = document.getElementById('group-capacity');
+            const capacityBar = document.getElementById('capacity-bar');
+            if (capacityText && capacityBar) {
+            capacityText.textContent = `${currentCount}/${maxStudents} students`;
+            const percentage = (currentCount / maxStudents) * 100;
+            capacityBar.style.width = `${percentage}%`;
+            }
+            }
+            }
+            });
     </script>
     @endif
     @endsection

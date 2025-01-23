@@ -75,4 +75,25 @@ class Student extends Model
     {
         return $this->belongsTo(Group::class);
     }
+
+    public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'course_student')
+        ->withPivot(['status', 'group_id', 'semester', 'academic_year'])
+        ->withTimestamps();
+    }
+    public function enrollInCourse(Course $course, $semester, $academicYear)
+    {
+        return $this->courses()->attach($course->id, [
+            'status' => 'enrolled',
+            'semester' => $semester,
+            'academic_year' => $academicYear
+        ]);
+    }
+    public function dropCourse(Course $course)
+    {
+        return $this->courses()->updateExistingPivot($course->id, [
+            'status' => 'dropped'
+        ]);
+    }
 }

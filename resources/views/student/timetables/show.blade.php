@@ -49,6 +49,12 @@
                 </svg>
                 Back
             </button>
+            <a href="{{ route('student.timetable.export') }}" class="inline-flex items-center px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition duration-150">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+                Export Timetable
+            </a>
         </div>
 
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
@@ -57,9 +63,12 @@
             <!-- Header -->
             <div class="bg-teal-600 text-white px-6 py-4">
                 <h1 class="text-2xl font-bold">Student Timetable</h1>
-                <button onclick="window.location='{{ route('timetables.export') }}'" class="bg-teal-500 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded">
-    Export
-</button>
+            </div>
+
+            <div class="px-6 py-4 bg-gray-50 border-b border-teal-200">
+                <p class="text-gray-600 text-center italic">
+                    "Dreams without deadlines are just wishes. Start acting on them or someone else will live your dream instead"
+                </p>
             </div>
 
 

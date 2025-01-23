@@ -16,15 +16,21 @@ class Lecturer extends Model
         'phone',
         'course_id',
         'lecturer_id',
+        'user_id',
     ];
 
     public function courses()
     {
-        return $this->belongsToMany(Course::class); // Many-to-many relationship with Course
+        return $this->belongsToMany(Course::class, 'course_lecturer'); // Many-to-many relationship with Course
     }
 
     public function faculty()
     {
         return $this->belongsTo(Faculty::class, 'faculty_id', 'id'); // Update to faculty_id
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

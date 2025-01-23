@@ -19,39 +19,42 @@ class SessionController extends Controller
         // Validate the login request
         $infologin = $request->only('email', 'password');
 
+        Log::info('Login attempt details', [
+            'email' => $request->email,
+            'password_provided' => !empty($request->password)
+        ]);
+
         if (Auth::attempt($infologin)) {
             $user = Auth::user();
 
-            // Log the user's role for debugging
-            Log::info('User login attempt:', [
+            Log::info('Login successful', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'role' => $user->role
             ]);
 
-            // Fetch the logged-in student's scholarship status if user is a student
-            if ($user->role === 'student') {
-                $student = Student::where('user_id', $user->id)->first();
-                if ($student) {
-                    session(['is_scholarship' => $student->scholarship_status]);
-                }
-            }
-
-            // Simplified role check and redirect
-            switch (strtolower($user->role)) {
-                case 'admin':
+            // Handle role-based redirections
+            switch($user->role) {
+                case 'lecturer':
+                    Log::info('Redirecting to lecturer dashboard');
+                    return redirect()->route('lecturer.dashboard');
+                case 'Admin':
                     return redirect()->route('admin.dashboard');
                 case 'faculty_dean':
                     return redirect()->route('dean.dashboard');
-                case 'student':
+                case 'Student':
                     return redirect()->route('student.dashboard');
                 default:
-                    Auth::logout();
-                    return redirect('/')->with('error', 'Invalid user role');
+                    Log::warning('No specific route for role', ['role' => $user->role]);
+                    return redirect('/');
             }
         }
 
-        return redirect('/')->with('error', 'Invalid credentials');
+        Log::error('Login failed', [
+            'email' => $request->email
+        ]);
+
+        return redirect('/')->with('error', 'Login details are not valid');
     }
 
 

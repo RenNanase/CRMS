@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\News;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Mews\Purifier\Facades\Purifier;
 
 class NewsController extends Controller
 {
@@ -26,6 +27,7 @@ class NewsController extends Controller
 
     public function store(Request $request)
     {
+
         $request->validate([
             'title' => 'required|max:255',
             'content' => 'required',
@@ -44,7 +46,7 @@ class NewsController extends Controller
             $path = $request->file('image')->storeAs('news', $filename, 'public');
             $news->image = $path; // This will store just 'news/filename.jpg'
         }
-
+        $news->content = Purifier::clean($request->content);
         $news->user_id = auth()->id();
         $news->save();
 

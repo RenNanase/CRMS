@@ -6,17 +6,21 @@ use App\Models\Group;
 use App\Models\Course;
 use App\Models\Timetable;
 use Illuminate\Http\Request;
+use App\Events\EnrollmentUpdated;
 
 class GroupController extends Controller
 {
     public function index()
     {
+        $courses = Course::all();
         $groups = Group::with(['course' => function($query) {
             $query->join('timetables', 'courses.id', '=', 'timetables.course_id')
                   ->select('courses.*', 'timetables.course_code', 'timetables.place');
-        }])->get();
+        }])
+        ->withCount('enrollments')
+        ->get();
 
-        return view('admin.groups.index', compact('groups'));
+        return view('admin.groups.index', compact('groups', 'courses'));
     }
 
     public function getFormData()
@@ -86,6 +90,9 @@ class GroupController extends Controller
             }
 
             $group = Group::create($validated);
+
+            // Broadcast the update
+            $this->broadcastEnrollmentUpdate($group->id);
 
             return response()->json([
                 'success' => true,
@@ -161,5 +168,15 @@ class GroupController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    private function broadcastEnrollmentUpdate($groupId)
+    {
+        $group = Group::withCount('enrollments')->find($groupId);
+        event(new EnrollmentUpdated(
+            $groupId,
+            $group->enrollments_count,
+            $group->max_students
+        ));
     }
 }

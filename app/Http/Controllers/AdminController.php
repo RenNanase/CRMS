@@ -11,6 +11,7 @@ use App\Models\Course;
 use App\Models\Faculty;
 use App\Models\News;
 
+
 class AdminController extends Controller
 {
     public function dashboard()

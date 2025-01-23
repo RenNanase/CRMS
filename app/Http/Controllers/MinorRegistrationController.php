@@ -65,9 +65,10 @@ class MinorRegistrationController extends Controller
                 'courses.id',
                 'courses.course_code',
                 'courses.course_name',
+                'courses.credit_hours',
                 'faculties.faculty_name as faculty'
             )
-            ->get();
+            ->paginate(10);
 
         return view('student.minor-registration.create', [
             'student' => $student,
@@ -81,7 +82,7 @@ class MinorRegistrationController extends Controller
         try {
             // Check if minor registration is open
             $activeRegistration = RegistrationPeriod::where('type', 'minor')
-                ->where('start_date', '<=', now())
+            ->where('start_date', '<=', now())
                 ->where('end_date', '>=', now())
                 ->first();
 
@@ -91,7 +92,7 @@ class MinorRegistrationController extends Controller
 
             // Get the authenticated student with program relationship
             $student = Student::with('program')
-                ->where('user_id', Auth::id())
+            ->where('user_id', Auth::id())
                 ->firstOrFail();
 
             // Check if student has any pending or approved minor registration
@@ -109,10 +110,10 @@ class MinorRegistrationController extends Controller
 
             // Build dynamic validation rules based on current semester
             $validationRules = [
-                'cgpa' => 'required|numeric|between:0,4.00',
-                'course_id' => 'required|exists:courses,id',
-                'proposed_semester' => 'required|string',
+
                 'signed_form' => 'required|file|mimes:pdf|max:2048',
+                'transcript' => 'required|file|mimes:pdf|max:2048',
+                'additional_docs' => 'nullable|file|mimes:pdf|max:5120', // 5MB max
             ];
 
             // Add GPA validation rules only for completed semesters
@@ -126,49 +127,37 @@ class MinorRegistrationController extends Controller
             // Get the course details
             $course = Course::with('faculty')->findOrFail($request->course_id);
 
-            // Add debugging for file upload
-            \Log::info('File upload attempt:', [
-                'original_name' => $request->file('signed_form')->getClientOriginalName(),
-                'mime_type' => $request->file('signed_form')->getMimeType(),
-                'size' => $request->file('signed_form')->getSize(),
-            ]);
+            // Store files with proper directory structure
+            Storage::disk('public')->makeDirectory('minor-registrations/signed-forms');
+            Storage::disk('public')->makeDirectory('minor-registrations/transcripts');
+            Storage::disk('public')->makeDirectory('minor-registrations/additional-docs');
 
-            // Store the file ONCE with a unique name
-            $file = $request->file('signed_form');
-            $fileName = time() . '_' . $file->getClientOriginalName();
+            // Store signed form
+            $signedFormPath = $request->file('signed_form')->store('minor-registrations/signed-forms', 'public');
 
-            // Ensure the directory exists
-            Storage::disk('public')->makeDirectory('minor-registrations');
+            // Store transcript
+            $transcriptPath = $request->file('transcript')->store('minor-registrations/transcripts', 'public');
 
-            // Store the file
-            $pdfPath = $file->storeAs(
-                'minor-registrations',
-                $fileName,
-                'public'
-            );
+            // Store additional docs if provided
+            $additionalDocsPath = null;
+            if ($request->hasFile('additional_docs')) {
+                $additionalDocsPath = $request->file('additional_docs')->store('minor-registrations/additional-docs', 'public');
+            }
 
             // Verify file storage
-            if (!Storage::disk('public')->exists($pdfPath)) {
+            if (!Storage::disk('public')->exists($signedFormPath) || !Storage::disk('public')->exists($transcriptPath)) {
                 throw new \Exception('File failed to store properly');
             }
 
-            \Log::info('File Storage Debug:', [
-                'original_name' => $file->getClientOriginalName(),
-                'stored_name' => $fileName,
-                'stored_path' => $pdfPath,
-                'full_storage_path' => Storage::disk('public')->path($pdfPath),
-                'exists_after_store' => Storage::disk('public')->exists($pdfPath)
+            // Log file uploads
+            \Log::info('File uploads:', [
+                'signed_form' => $signedFormPath,
+                'transcript' => $transcriptPath,
+                'additional_docs' => $additionalDocsPath
             ]);
 
-            // Prepare GPA data with null values for future semesters
-            $gpaData = [
-                'semester1_gpa' => $request->semester1_gpa ?? null,
-                'semester2_gpa' => $request->semester2_gpa ?? null,
-                'semester3_gpa' => $request->semester3_gpa ?? null,
-                'semester4_gpa' => $request->semester4_gpa ?? null,
-            ];
 
-            // Create the minor registration with the verified file path
+            // Create the minor registration
             $minorRegistration = MinorRegistration::create([
                 'student_id' => $student->id,
                 'name' => $student->name,
@@ -176,31 +165,22 @@ class MinorRegistrationController extends Controller
                 'current_semester' => $student->current_semester,
                 'program_name' => $student->program->name,
                 'phone' => $student->phone,
-                'email' => $student->email,
-                'semester1_gpa' => $gpaData['semester1_gpa'],
-                'semester2_gpa' => $gpaData['semester2_gpa'],
-                'semester3_gpa' => $gpaData['semester3_gpa'],
-                'semester4_gpa' => $gpaData['semester4_gpa'],
-                'cgpa' => $validated['cgpa'],
-                'course_id' => $course->id,
-                'course_code' => $course->course_code,
-                'course_name' => $course->course_name,
-                'faculty' => $course->faculty_id,
-                'proposed_semester' => $validated['proposed_semester'],
-                'signed_form_path' => $pdfPath,  // Use the verified file path
+                'signed_form_path' => $signedFormPath,
+                'transcript_path' => $transcriptPath,
+                'additional_docs_path' => $additionalDocsPath,
                 'registration_period_id' => $activeRegistration->id,
                 'status' => 'pending'
             ]);
 
             \Log::info('Minor Registration Created:', [
                 'id' => $minorRegistration->id,
-                'file_path' => $minorRegistration->signed_form_path,
-                'file_exists' => Storage::disk('public')->exists($minorRegistration->signed_form_path)
+                'signed_form_path' => $minorRegistration->signed_form_path,
+                'transcript_path' => $minorRegistration->transcript_path,
+                'additional_docs_path' => $minorRegistration->additional_docs_path
             ]);
 
             return redirect()->route('minor-registration.create')
-                ->with('success', 'Your minor course registration has been submitted successfully! Please wait for the Dean\'s approval.');
-
+            ->with('success', 'Your minor course registration has been submitted successfully! Please wait for the Dean\'s approval.');
         } catch (\Exception $e) {
             \Log::error('Minor Registration Error:', [
                 'error' => $e->getMessage(),
@@ -208,7 +188,8 @@ class MinorRegistrationController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('error', 'There was an error submitting your registration: ' . $e->getMessage());
+                ->with('error', 'There was an error submitting your registration: ' . $e->getMessage())
+                ->withInput();
         }
     }
 
@@ -303,30 +284,54 @@ class MinorRegistrationController extends Controller
 
     public function generatePdf(Request $request)
     {
-        // Get the authenticated student
-        $student = auth()->user()->student;
+        try {
+            // Get the authenticated student with relationships
+            $student = Student::with(['program', 'user'])
+                ->where('user_id', auth()->id())
+                ->firstOrFail();
 
-        // Get the selected course
-        $course = Course::find($request->course_id);
+            // Get the selected course with faculty
+            $course = Course::with('faculty')
+            ->findOrFail($request->course_id);
 
-        // Prepare data for PDF
-        $data = [
-            'student' => $student,
-            'course' => $course,
-            'proposed_semester' => $request->proposed_semester,
-            'semester1_gpa' => $request->semester1_gpa,
-            'semester2_gpa' => $request->semester2_gpa,
-            'semester3_gpa' => $request->semester3_gpa,
-            'semester4_gpa' => $request->semester4_gpa,
-            'cgpa' => $request->cgpa,
-            'date' => now()->format('d/m/Y'),
-        ];
+            // Get current academic period
+            $academicPeriod = RegistrationPeriod::where('type', 'minor')
+            ->where('status', 'active')
+            ->first();
 
-        // Generate PDF
-        $pdf = PDF::loadView('pdfs.minor-registration-form', $data);
+            // Prepare data for PDF
+            $data = [
+                'student' => $student, // Pass the entire student model
+                'course' => $course,   // Pass the entire course model
+                'academic_session' => $academicPeriod ? $academicPeriod->academic_period->name : now()->year . '/' . (now()->year + 1),
+                'proposed_semester' => $request->proposed_semester,
+                'academic_records' => [
+                    'semester1_gpa' => $request->semester1_gpa,
+                    'semester2_gpa' => $request->semester2_gpa,
+                    'semester3_gpa' => $request->semester3_gpa,
+                    'semester4_gpa' => $request->semester4_gpa,
+                    'cgpa' => $request->cgpa,
+                ]
+            ];
 
-        // Return the PDF for download
-        return $pdf->download('minor-registration-form.pdf');
+            \Log::info('PDF Generation Data:', $data);
+
+            // Configure PDF
+            $pdf = PDF::loadView('pdfs.minor-registration-form', $data);
+            $pdf->setPaper('a4');
+
+            // Generate filename
+            $filename = 'minor_registration_' . $student->matric_number . '_' . date('Y-m-d_His') . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            \Log::error('PDF Generation Error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->with('error', 'Failed to generate PDF. Please try again.');
+        }
     }
 
     // Add this new method to your controller

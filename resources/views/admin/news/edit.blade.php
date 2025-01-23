@@ -6,11 +6,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit News - News Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Add QuillJS CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <!-- Add QuillJS library -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
         body {
             font-family: 'Inter', sans-serif;
+        }
+
+        /* QuillJS Custom Styles */
+        .ql-editor {
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .ql-toolbar.ql-snow {
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            border-color: #e5e7eb;
+        }
+
+        .ql-container.ql-snow {
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+            border-color: #e5e7eb;
+        }
+
+        .ql-editor:focus {
+            outline: 2px solid #0d9488;
+            outline-offset: -2px;
         }
     </style>
 </head>
@@ -74,9 +102,11 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Current Image
                             </label>
-                            <div class="w-full max-w-md">
-                                <img src="{{ asset('storage/' . $news->image) }}" alt="Current image"
-                                    class="rounded-lg shadow-md max-h-48 object-cover">
+                            <div class="w-full flex justify-center items-center">
+                                <div class="max-w-md w-full">
+                                    <img src="{{ asset('storage/' . $news->image) }}" alt="Current image"
+                                        class="rounded-lg shadow-md max-h-48 object-cover w-full mx-auto">
+                                </div>
                             </div>
                         </div>
                         @endif
@@ -112,10 +142,12 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2" for="content">
                                 Content <span class="text-red-500">*</span>
                             </label>
-                            <textarea
-                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200"
-                                id="content" name="content" rows="8"
-                                required>{{ old('content', $news->content) }}</textarea>
+                            <!-- Hidden input to store the content value -->
+                            <input type="hidden" name="content" id="content">
+                            <!-- Quill Editor Container -->
+                            <div id="editor" class="bg-white rounded-lg">
+                                {!! old('content', $news->content) !!}
+                            </div>
                         </div>
 
                         <!-- Action Buttons -->
@@ -134,6 +166,38 @@
             </div>
         </div>
     </div>
+
+    <!-- Add QuillJS Initialization -->
+    <script>
+        var quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Write your article content here...',
+        });
+
+        // Update hidden input before form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            var content = document.querySelector('#content');
+            content.value = quill.root.innerHTML;
+        });
+
+        // Initialize with existing content
+        @if(old('content'))
+            quill.root.innerHTML = {!! json_encode(old('content')) !!};
+        @else
+            quill.root.innerHTML = {!! json_encode($news->content) !!};
+        @endif
+    </script>
 
     <script>
         function previewImage(input) {

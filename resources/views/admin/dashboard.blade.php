@@ -408,42 +408,60 @@
                 <i class="fas fa-home"></i>
                 <span class="nav-text">Home</span>
             </a>
-<a href="{{ route('admin.groups.index') }}" class="nav-link">
-    <i class="fas fa-users"></i>
-    <span class="nav-text">Manage Groups</span>
-</a>
-            <a href="{{ route('admin.academic-periods.index') }}">
-                            <i class="fas fa-user-graduate"></i>
-                            <span class="nav-text">Academic Period</span>
-                        </a>
-            <a href="{{ route('admin.registration-periods.index') }}" >
-                <i class="fas fa-calendar-alt"></i>
-                <span class="nav-text">Registration Period</span>
+                <!-- User Management -->
+<a href="#" class="nav-link has-submenu" data-target="user-submenu">
+                <i class="fas fa-user-graduate"></i>
+                <span class="nav-text">User Management</span>
+                <i class="fas fa-chevron-down" style="color: rgba(255, 255, 255, 0.8);"></i>
             </a>
-            <a href="{{ route('admin.students.index') }}">
+            <div class="nav-submenu" id="user-submenu">
+<a href="{{ route('admin.students.index') }}">
                 <i class="fas fa-user-graduate"></i>
                 <span class="nav-text">Student Management</span>
             </a>
-            <a href="{{ route('lecturers.index') }}">
+            <a href="{{ route('admin.lecturers.index') }}">
                 <i class="fas fa-chalkboard-teacher"></i>
                 <span class="nav-text">Lecturer Management</span>
             </a>
-            <a href="{{ route('courses.index') }}">
-                <i class="fas fa-book"></i>
-                <span class="nav-text">Course Management</span>
-            </a>
-            <a href="{{ route('events.index') }}">
-                <i class="fas fa-calendar-alt"></i>
-                <span class="nav-text">Event Management</span>
-            </a>
-            <a href="{{ route('news.index') }}">
-                <i class="fas fa-newspaper"></i>
-                <span class="nav-text">News Management</span>
-            </a>
-            <a href="{{ route('admin.program-structures.list') }}">
+            </div>
+
+<!-- Academic Management -->
+
+<a href="#" class="nav-link has-submenu" data-target="academic-submenu">
+    <i class="fas fa-user-graduate"></i>
+    <span class="nav-text">Academic Management</span>
+    <i class="fas fa-chevron-down" style="color: rgba(255, 255, 255, 0.8);"></i>
+</a>
+<div class="nav-submenu" id="academic-submenu">
+    <a href="{{ route('admin.academic-periods.index') }}">
+        <i class="fas fa-user-graduate"></i>
+        <span class="nav-text">Academic Period</span>
+    </a>
+    <a href="{{ route('admin.registration-periods.index') }}">
+        <i class="fas fa-chalkboard-teacher"></i>
+        <span class="nav-text">Registration Period</span>
+    </a>
+    <a href="{{ route('courses.index') }}">
+                    <i class="fas fa-book"></i>
+                    <span class="nav-text">Course Management</span>
+                </a>
+<a href="{{ route('admin.program-structures.list') }}">
                 <i class="fas fa-file-pdf"></i>
                 <span class="nav-text">Program Structure Management</span>
             </a>
+            <a href="{{ route('admin.groups.index') }}" class="nav-link">
+                <i class="fas fa-users"></i>
+                <span class="nav-text">Group Management</span>
+            </a>
+            <a href="{{ route('admin.timetables.show') }}">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span class="nav-text">Timetable Management</span>
+                        </a>
+</div>
+
+
+
+
 
             <a href="#" class="nav-link has-submenu" data-target="enrollment-submenu">
                 <i class="fas fa-user-graduate"></i>
@@ -455,20 +473,25 @@
                     <i class="fas fa-check-circle"></i>
                     <span class="nav-text">Major Course Requests</span>
                 </a>
-                <a href="{{ route('admin.enrollments.approved') }}">
-                    <i class="fas fa-thumbs-up"></i>
-                    <span class="nav-text">Approved Enrollments</span>
-                </a>
-                <a href="{{ route('admin.enrollments.rejected') }}">
-                    <i class="fas fa-thumbs-down"></i>
-                    <span class="nav-text">Rejected Enrollments</span>
-                </a>
             </div>
 
-            <a href="{{ route('admin.timetables.show') }}">
-                <i class="fas fa-calendar-alt"></i>
-                <span class="nav-text">Timetable Management</span>
-            </a>
+            <!-- Content Management -->
+                        <a href="#" class="nav-link has-submenu" data-target="content-submenu">
+                            <i class="fas fa-user-graduate"></i>
+                            <span class="nav-text">Content Management</span>
+                            <i class="fas fa-chevron-down" style="color: rgba(255, 255, 255, 0.8);"></i>
+                        </a>
+                        <div class="nav-submenu" id="content-submenu">
+                            <a href="{{ route('events.index') }}">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span class="nav-text">Event Management</span>
+                            </a>
+                            <a href="{{ route('news.index') }}">
+                                <i class="fas fa-newspaper"></i>
+                                <span class="nav-text">News Management</span>
+                            </a>
+                        </div>
+
         </div>
 
         <div class="content-wrapper">
@@ -589,17 +612,17 @@
     </div>
 </div>
 
-<!-- News Modal -->
+<!-- Enhanced News Modal -->
 <div class="modal fade" id="newsModal" tabindex="-1" aria-labelledby="newsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header border-bottom-0">
-                <h5 class="modal-title" id="newsModalLabel"></h5>
+        <div class="modal-content rounded-xl overflow-hidden">
+            <div class="modal-header border-b border-teal-100 bg-teal-50/50 p-6">
+                <h5 class="modal-title text-xl font-semibold text-teal-800" id="newsModalLabel"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div id="newsImage" class="mb-4 text-center"></div>
-                <div id="newsContent"></div>
+            <div class="modal-body p-6">
+                <div id="newsImage" class="mb-6 text-center"></div>
+                <div id="newsContent" class="prose max-w-none text-gray-700"></div>
             </div>
         </div>
     </div>

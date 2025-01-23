@@ -227,13 +227,13 @@ class CourseRequestController extends Controller
     {
         // Check registration period first
         $activeMajorPeriod = RegistrationPeriod::where('type', 'major')
-        ->where('start_date', '<=', now())
+            ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
             ->first();
 
         // Get student data
         $student = Auth::user()->student;
-        $studentStatus = $student->is_scholarship;
+        $studentStatus = $student->scholarship_status === 'Scholarship';
         $matricNumber = $student->matric_number;
 
         // Only fetch and process courses if registration is open

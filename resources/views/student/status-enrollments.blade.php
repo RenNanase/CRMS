@@ -52,9 +52,7 @@
                     <button class="bg-teal-500 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded">
                         Export
                     </button>
-                    <button class="bg-teal-500 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded">
-                        Filter
-                    </button>
+
                 </div>
             </div>
 
@@ -64,22 +62,22 @@
 
                     <thead class="bg-teal-50 border-b border-teal-200">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">Course ID</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">Course Name</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">Request Type</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">Submission Date</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">Status</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">Remarks</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">Course Code</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">Course Name</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">Request Type</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">Submission Date</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">Remarks</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-teal-200">
                         @forelse ($courseRequests as $request)
                             <tr class="hover:bg-teal-50 transition duration-200">
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{{ $request->course->course_code }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{{ $request->course->course_name }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{{ $request->request_type }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{{ $request->created_at->format('Y-m-d') }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap">
+                                <td class="px-4 py-3 text-center whitespace-nowrap text-sm text-gray-700">{{ $request->course->course_code }}</td>
+                                <td class="px-4 py-3 text-center whitespace-nowrap text-sm text-gray-700">{{ $request->course->course_name }}</td>
+                                <td class="px-4 py-3 text-center whitespace-nowrap text-sm text-gray-700">{{ $request->request_type }}</td>
+                                <td class="px-4 py-3 text-center whitespace-nowrap text-sm text-gray-700">{{ $request->created_at->format('Y-m-d') }}</td>
+                                <td class="px-4 py-3 text-center whitespace-nowrap">
                                     @switch($request->status)
                                         @case('approved')
                                             <span class="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
@@ -97,7 +95,7 @@
                                             </span>
                                     @endswitch
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{{ $request->remarks ?? '-' }}</td>
+                                <td class="px-4 py-3 text-center whitespace-nowrap text-sm text-gray-700">{{ $request->remarks ?? '-' }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -133,31 +131,31 @@
         <table class="w-full">
             <thead class="bg-teal-50 border-b border-teal-200">
                 <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">Course
+                    <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">Course
                         Code</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">Course
+                    <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">Course
                         Name</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">Proposed
+                    <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">Proposed
                         Semester</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">
+                    <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">
                         Submission Date</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">Status
+                    <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">Status
                     </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">Dean's
+                    <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">Dean's
                         Comments</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-teal-700 uppercase tracking-wider">Actions</th>
+                    <th class="px-4 py-3 text-center text-xs font-medium text-teal-700 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-teal-200">
                 @forelse ($minorRegistrations as $registration)
                 <tr class="hover:bg-teal-50 transition duration-200">
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{{ $registration->course_code }}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{{ $registration->course_name }}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{{ $registration->proposed_semester }}
+                    <td class="px-4 py-3 text-center whitespace-nowrap text-sm text-gray-700">{{ $registration->course_code }}</td>
+                    <td class="px-4 py-3 text-center whitespace-nowrap text-sm text-gray-700">{{ $registration->course_name }}</td>
+                    <td class="px-4 py-3 text-center whitespace-nowrap text-sm text-gray-700">{{ $registration->proposed_semester }}
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{{
+                    <td class="px-4 py-3 text-center whitespace-nowrap text-sm text-gray-700">{{
                         $registration->created_at->format('Y-m-d') }}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
                         <span class="px-2 py-1 rounded-full text-xs font-semibold
                             {{ $registration->status === 'approved' ? 'bg-green-100 text-green-800' :
                                ($registration->status === 'rejected' ? 'bg-red-100 text-red-800' :
@@ -165,9 +163,9 @@
                             {{ ucfirst($registration->status) }}
                         </span>
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{{ $registration->dean_comments ?? '-'
+                    <td class="px-4 py-3 text-center whitespace-nowrap text-sm text-gray-700">{{ $registration->dean_comments ?? '-'
                         }}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
                         <!-- Debug information -->
                         <div class="text-xs text-gray-500">
                             Status: {{ $registration->status }}

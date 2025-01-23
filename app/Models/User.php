@@ -25,6 +25,14 @@ class User extends Authenticatable
         'role_id',
     ];
 
+    const ROLES = [
+        'Admin' => 'Admin',
+        'Student' => 'Student',
+        'program_head' => 'program_head',
+        'faculty_dean' => 'faculty_dean',
+        'offering_faculty' => 'offering_faculty',
+        'lecturer' => 'lecturer'
+    ];
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -72,5 +80,14 @@ public function student()
     public function faculty()
     {
         return $this->belongsTo(Faculty::class);
+    }
+    public function lecturer()
+    {
+        return $this->hasOne(Lecturer::class, 'user_id');
+    }
+
+    public function AdminMiddleware()
+    {
+        return $this->role === 'admin';
     }
 }

@@ -4,21 +4,17 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
-use DB;
+use Illuminate\Database\Schema\Builder;
 
 class AppServiceProvider extends ServiceProvider
 {
-public function boot()
-{
-// Set timezone for database connection
-DB::statement("SET time_zone = '+08:00'");
+    public function register(): void
+    {
+        //
+    }
 
-// Optional: You can also configure MySQL session timezone
-DB::statement("SET SESSION time_zone = '+08:00'");
-}
-
-public function register()
-{
-//
-}
+    public function boot(): void
+    {
+        Builder::defaultStringLength(191);
+    }
 }

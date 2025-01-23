@@ -132,19 +132,69 @@
                 <!-- Document Preview Card -->
                 <div class="glass-morphism rounded-2xl overflow-hidden card-hover">
                     <div class="gradient-header px-6 py-4">
-                        <h2 class="text-xl font-semibold text-white">Supporting Document</h2>
+                        <h2 class="text-xl font-semibold text-white">Supporting Documents</h2>
                     </div>
-                    <div class="p-6">
-                        <a href="{{ Storage::disk('public')->url($minorRegistration->signed_form_path) }}"
-                            class="inline-flex items-center justify-center w-full px-4 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-all duration-200 shadow-md hover:shadow-lg">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            View Application Form
-                        </a>
+                    <div class="p-6 space-y-4">
+                        <!-- Signed Form -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-teal-800">Application Form</label>
+                            <a href="{{ Storage::disk('public')->url($minorRegistration->signed_form_path) }}"
+                                class="inline-flex items-center justify-center w-full px-4 py-3 bg-teal-600 text-white rounded-xl hover:bg-teal-700 transition-all duration-200 shadow-md hover:shadow-lg">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                View Application Form
+                            </a>
+                        </div>
+
+                        <!-- Academic Transcript -->
+                        @if($minorRegistration->transcript_path)
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-teal-800">Academic Transcript</label>
+                            <a href="{{ Storage::disk('public')->url($minorRegistration->transcript_path) }}"
+                                class="inline-flex items-center justify-center w-full px-4 py-3 bg-white border-2 border-teal-500 text-teal-700 rounded-xl hover:bg-teal-50 transition-all duration-200 shadow-md hover:shadow-lg">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                View Transcript
+                            </a>
+                        </div>
+                        @endif
+
+                        <!-- Additional Documents -->
+                        @if($minorRegistration->additional_docs_path)
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-teal-800">Additional Documents</label>
+                            <a href="{{ Storage::disk('public')->url($minorRegistration->additional_docs_path) }}"
+                                class="inline-flex items-center justify-center w-full px-4 py-3 bg-white border-2 border-teal-500 text-teal-700 rounded-xl hover:bg-teal-50 transition-all duration-200 shadow-md hover:shadow-lg">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                View Additional Documents
+                            </a>
+                        </div>
+                        @endif
+
+                        <!-- Document Status Indicators -->
+                        <div class="mt-4 pt-4 border-t border-teal-100">
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 rounded-full {{ $minorRegistration->transcript_path ? 'bg-teal-500' : 'bg-gray-300' }}"></span>
+                                    <span class="{{ $minorRegistration->transcript_path ? 'text-teal-700' : 'text-gray-500' }}">
+                                        Transcript {{ $minorRegistration->transcript_path ? 'Submitted' : 'Not Submitted' }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 rounded-full {{ $minorRegistration->additional_docs_path ? 'bg-teal-500' : 'bg-gray-300' }}"></span>
+                                    <span class="{{ $minorRegistration->additional_docs_path ? 'text-teal-700' : 'text-gray-500' }}">
+                                        Additional Docs {{ $minorRegistration->additional_docs_path ? 'Submitted' : 'Not Submitted' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -159,7 +209,7 @@
                     <form action="{{ route('dean.minor-requests.recommendation', $minorRegistration )}}" method="POST"
                     class="p-6 space-y-6">
 
-                            
+
 
                             @csrf
                             @method('PUT')

@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\CourseController;
-use App\Http\Controllers\LecturerController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CourseRegistrationController;
 use App\Http\Controllers\ForgotPasswordController;
@@ -27,15 +26,14 @@ use App\Http\Controllers\CourseOfferingController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\GroupController;
 use App\Models\Group;
+use App\Http\Controllers\LecturerController;
 
 
-
-// Add this debug route to check auth status
-Route::get('/check-auth', function () {
+Route::get('/debug-routes', function () {
     dd([
-        'authenticated' => auth()->check(),
-        'user' => auth()->user(),
-        'session' => session()->all()
+        'all_routes' => Route::getRoutes()->getRoutesByName(),
+        'current_user' => auth()->user(),
+        'auth_check' => auth()->check()
     ]);
 });
 
@@ -57,8 +55,6 @@ Route::middleware(['auth', 'check.registration:minor'])->group(function () {
     Route::post('/minor-registration', [MinorRegistrationController::class, 'store']);
 });
 
-    //Export routes
-    Route::get('/timetables/export', [StudentController::class, 'exportTimetable'])->name('timetables.export');
 
 
     //api
@@ -74,7 +70,7 @@ Route::get('/api/groups/{courseId}', [App\Http\Controllers\CourseController::cla
 
 
     // Admin routes with middleware
-    Route::middleware(['auth', 'user.access:admin'])->prefix('admin')->group(function () {
+    Route::middleware(['auth', 'user.access:Admin'])->prefix('admin')->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
         //create student
         // Student management routes
@@ -95,11 +91,15 @@ Route::get('/api/groups/{courseId}', [App\Http\Controllers\CourseController::cla
     Route::put('/admin/timetables/{id}', [AdminTimetableController::class, 'update'])->name('admin.timetables.update');
     Route::delete('/admin/timetables/{id}', [AdminTimetableController::class, 'destroy'])->name('admin.timetables.destroy');
     Route::get('/admin/timetables/show', [AdminTimetableController::class, 'showTimetables'])->name('admin.timetables.show');
-    Route::get('/admin/lecturers/create', [LecturerController::class, 'createLecturer'])->name('admin.lecturers.create');
-    Route::post('/admin/lecturers', [LecturerController::class, 'store'])->name('admin.lecturers.store');
-    Route::get('/admin/lecturers/{id}/edit', [LecturerController::class, 'edit'])->name('admin.lecturers.edit');
-    Route::put('/admin/lecturers/{id}', [LecturerController::class, 'update'])->name('admin.lecturers.update');
-    Route::delete('/admin/lecturers/{id}', [LecturerController::class, 'destroy'])->name('admin.lecturers.destroy');
+
+
+    // Lecturer management routes
+    Route::get('/lecturers', [LecturerController::class, 'index'])->name('admin.lecturers.index');
+    Route::get('/lecturers/create', [LecturerController::class, 'create'])->name('admin.lecturers.create');
+    Route::post('/lecturers', [LecturerController::class, 'store'])->name('admin.lecturers.store');
+    Route::get('/lecturers/{id}/edit', [LecturerController::class, 'edit'])->name('admin.lecturers.edit');
+    Route::put('/lecturers/{id}', [LecturerController::class, 'update'])->name('admin.lecturers.update');
+    Route::delete('/lecturers/{id}', [LecturerController::class, 'destroy'])->name('admin.lecturers.destroy');
             // News routes
             Route::get('/admin/news', [NewsController::class, 'index'])->name('news.index');
             Route::get('/admin/news/create', [NewsController::class, 'create'])->name('news.create');
@@ -238,7 +238,10 @@ Route::middleware(['auth', 'user.access:student'])->group(function () {
     Route::post('/enrollments', [EnrollmentController::class, 'store'])->name('enrollments.store');
     Route::get('/students/status-enrollment', [StudentController::class, 'showEnrollmentStatus'])->name('students.status-enrollment');
     Route::get('/student/enrollment-status', [StudentController::class, 'showEnrollmentStatus'])->name('student.enrollment-status');
-    Route::get('/student/timetable', [StudentController::class, 'showTimetable'])->name('student.timetable');
+    Route::get('/student/timetable', [StudentController::class, 'showTimetable'])
+    ->name('student.timetable');
+    Route::get('/student/timetable/export', [StudentController::class, 'exportTimetable'])
+    ->name('student.timetable.export');
     Route::get('/enrollment-status', [StudentController::class, 'showEnrollmentStatus'])->name('student.enrollment-status');
     Route::get('student/program-structure', [ProgramStructureController::class, 'show'])->name('student.program-structure');
     Route::get('program-structure/download', [ProgramStructureController::class, 'download'])->name('student.program-structure.download');
@@ -252,8 +255,10 @@ Route::middleware(['auth', 'user.access:student'])->group(function () {
     ->name('student.minor-registration.store')
     ->middleware('check.registration:minor');
 
-    Route::post('/student/minor-registration/generate-pdf', [MinorRegistrationController::class, 'generatePdf'])
-    ->name('student.minor-registration.generate-pdf');
+    Route::get('/student/minor-registration/download-form', function () {
+        $path = public_path('forms/minor-form.pdf'); // Adjust path as needed
+        return response()->download($path, 'minor-form.pdf');
+    })->name('student.minor-registration.download-form');
 
     Route::patch('/student/minor-registration/{minorRegistration}/cancel', [MinorRegistrationController::class, 'cancel'])
     ->name('student.minor-registration.cancel');
@@ -284,22 +289,37 @@ Route::get('/test-prerequisites', function () {
 Route::get('/course-prerequisites/{courseId}', [CourseController::class, 'getPrerequisites']);
 
 Route::resource('courses', CourseController::class);
-Route::resource('lecturers', LecturerController::class);
 Route::resource('events', EventController::class);
 Route::resource('program-structures', ProgramStructureController::class);
 Route::resource('academic-periods', AcademicPeriodController::class);
 Route::resource('registration-periods', RegistrationPeriodController::class);
 
 
+// Lecturer routes
+Route::middleware(['auth', 'isLecturer'])->group(function () {
+    Route::get('/lecturer/dashboard', [LecturerController::class, 'dashboard'])
+        ->name('lecturer.dashboard');
+    // Course Management
+    Route::get('/lecturer/courses', [LecturerController::class, 'myCourses'])
+    ->name('lecturer.courses');
 
+    // Student Management
+    Route::get('/lecturer/courses/{course}/students', [LecturerController::class, 'courseStudents'])
+    ->name('lecturer.course.students');
 
+    Route::get('/lecturer/profile', [LecturerController::class, 'profile'])
+    ->name('lecturer.profile');
 
+    Route::get('/lecturer/profile/edit/{id}', [LecturerController::class, 'editProfile'])
+    ->name('lecturer.profile.edit');
+    Route::put('/lecturer/profile/{id}', [LecturerController::class, 'updateProfile'])
+    ->name('lecturer.profile.update');
+});
 
 
 Route::middleware(['auth', 'is_dean'])->group(function () {
     Route::get('/dean/dashboard', [DeanController::class, 'dashboard'])
         ->name('dean.dashboard');
-    // Minor registration routes
     // Minor registration routes
     Route::get('/dean/minor-requests', [MinorRegistrationController::class, 'index'])
     ->name('dean.minor-requests.index');

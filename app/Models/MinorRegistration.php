@@ -32,6 +32,8 @@ class MinorRegistration extends Model
         'dean_name',
         'dean_signature',
         'recommendation_date',
+        'transcript_path',
+        'additional_docs_path',
     ];
 
     protected $casts = [
@@ -97,5 +99,9 @@ class MinorRegistration extends Model
     public function group()
     {
         return $this->belongsTo(Group::class);
+    }
+    public function timetable()
+    {
+        return $this->belongsTo(Timetable::class, 'course_code', 'course_code');
     }
 }

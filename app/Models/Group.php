@@ -28,6 +28,7 @@ class Group extends Model
         return $this->belongsToMany(Student::class, 'enrollments');
     }
 
+    
     public function getCurrentEnrollmentCount()
     {
         return $this->enrollments()->count();

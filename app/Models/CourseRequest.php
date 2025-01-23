@@ -50,5 +50,9 @@ public function registrationPeriod()
     {
         return $this->belongsTo(Student::class);
     }
+    public function timetable()
+    {
+        return $this->belongsTo(Timetable::class, 'course_code', 'course_code');
+    }
 
 }
