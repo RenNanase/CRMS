@@ -18,16 +18,13 @@ class MinorRegistrationController extends Controller
     {
         \Log::info('Attempting to access minor registration create method');
 
-        // Check if minor registration is open
-        $activeMinorPeriod = RegistrationPeriod::minor()->active()->first();
+        // Get active minor registration period
+        $activeMinorPeriod = RegistrationPeriod::where('type', 'minor')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
 
         \Log::info('Active minor period check:', ['active_period' => $activeMinorPeriod]);
-
-        if (!$activeMinorPeriod) {
-            \Log::warning('No active minor registration period found');
-            return redirect()->route('student.dashboard')
-                ->with('error', 'Minor course registration is currently closed.');
-        }
 
         $student = Student::with('program')
             ->where('user_id', Auth::id())
@@ -45,20 +42,7 @@ class MinorRegistrationController extends Controller
 
         \Log::info('Existing registration check:', ['existing_registration' => $existingRegistration]);
 
-        if ($existingRegistration) {
-            \Log::warning('Student has existing registration', [
-                'status' => $existingRegistration->status
-            ]);
-
-            // Instead of redirecting, return view with existing registration info
-            return view('student.minor-registration.create', [
-                'student' => $student,
-                'existingRegistration' => $existingRegistration,
-                'message' => "You already have an {$existingRegistration->status} minor registration for {$existingRegistration->course_name}."
-            ]);
-        }
-
-        // If no existing registration, continue with normal flow
+        // Get available minor courses
         $minorCourses = Course::where('type', 'minor')
             ->join('faculties', 'courses.faculty_id', '=', 'faculties.id')
             ->select(
@@ -73,7 +57,8 @@ class MinorRegistrationController extends Controller
         return view('student.minor-registration.create', [
             'student' => $student,
             'minorCourses' => $minorCourses,
-            'activeMinorPeriod' => $activeMinorPeriod
+            'activeMinorPeriod' => $activeMinorPeriod,  // Pass the variable to the view
+            'existingRegistration' => $existingRegistration
         ]);
     }
 
@@ -90,8 +75,8 @@ class MinorRegistrationController extends Controller
                 return redirect()->back()->with('error', 'Minor course registration is currently closed.');
             }
 
-            // Get the authenticated student with program relationship
-            $student = Student::with('program')
+            // Get the authenticated student with program and user relationships
+            $student = Student::with(['program', 'user'])
             ->where('user_id', Auth::id())
                 ->firstOrFail();
 
@@ -105,27 +90,16 @@ class MinorRegistrationController extends Controller
                     ->with('error', 'You already have a ' . $existingRegistration->status . ' minor registration. You cannot submit another request until the current one is processed.');
             }
 
-            // Get current semester number
-            $currentSemester = (int) str_replace('Semester ', '', $student->current_semester);
-
-            // Build dynamic validation rules based on current semester
+            // Simplified validation rules - only for required documents
             $validationRules = [
-
+                'course_id' => 'required|exists:courses,id',
                 'signed_form' => 'required|file|mimes:pdf|max:2048',
                 'transcript' => 'required|file|mimes:pdf|max:2048',
                 'additional_docs' => 'nullable|file|mimes:pdf|max:5120', // 5MB max
             ];
 
-            // Add GPA validation rules only for completed semesters
-            for ($i = 1; $i <= $currentSemester; $i++) {
-                $validationRules["semester{$i}_gpa"] = 'required|numeric|between:0,4.00';
-            }
-
             // Validate the request
             $validated = $request->validate($validationRules);
-
-            // Get the course details
-            $course = Course::with('faculty')->findOrFail($request->course_id);
 
             // Store files with proper directory structure
             Storage::disk('public')->makeDirectory('minor-registrations/signed-forms');
@@ -156,6 +130,8 @@ class MinorRegistrationController extends Controller
                 'additional_docs' => $additionalDocsPath
             ]);
 
+            // Get the course details
+            $course = Course::findOrFail($request->course_id);
 
             // Create the minor registration
             $minorRegistration = MinorRegistration::create([
@@ -165,6 +141,12 @@ class MinorRegistrationController extends Controller
                 'current_semester' => $student->current_semester,
                 'program_name' => $student->program->name,
                 'phone' => $student->phone,
+                'email' => $student->user->email,
+                'cgpa' => 0.00,
+                'course_id' => $course->id,
+                'course_code' => $course->course_code,
+                'course_name' => $course->course_name,
+                'faculty' => $course->faculty->faculty_name,
                 'signed_form_path' => $signedFormPath,
                 'transcript_path' => $transcriptPath,
                 'additional_docs_path' => $additionalDocsPath,

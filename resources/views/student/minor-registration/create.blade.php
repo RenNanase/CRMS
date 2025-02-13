@@ -56,25 +56,30 @@
             @if(isset($existingRegistration))
                 <div class="bg-teal-50 border-l-4 border-teal-500 p-6 rounded-lg mb-6">
                     <h4 class="text-xl font-semibold text-teal-800 mb-4">Minor Registration Status</h4>
-                    <p class="text-teal-700 text-lg mb-4">{{ $message }}</p>
+                    <p class="text-teal-700 text-lg mb-4">
+                        @if($existingRegistration->status === 'pending')
+                            Your minor registration application is currently pending approval.
+                        @elseif($existingRegistration->status === 'approved')
+                            Your minor registration application has been approved.
+                        @elseif($existingRegistration->status === 'rejected')
+                            Your minor registration application has been rejected.
+                        @endif
+                    </p>
                     <hr class="border-teal-200 my-4">
                     <div class="mt-3">
-                        <h5 class="font-semibold text-teal-800 mb-3">Course Details:</h5>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-2">
-                                <p class="text-teal-700"><span class="font-medium">Course Code:</span> {{
-                                    $existingRegistration->course_code }}</p>
-                                <p class="text-teal-700"><span class="font-medium">Course Name:</span> {{
-                                    $existingRegistration->course_name }}</p>
-                                <p class="text-teal-700"><span class="font-medium">Faculty:</span> {{
-                                    $existingRegistration->student->program->name }}</p>
+                                <p class="text-teal-700"><span class="font-medium">Course Code:</span> {{ $existingRegistration->course_code }}</p>
+                                <p class="text-teal-700"><span class="font-medium">Course Name:</span> {{ $existingRegistration->course_name }}</p>
+                                <p class="text-teal-700"><span class="font-medium">Faculty:</span> {{ $existingRegistration->faculty }}</p>
                             </div>
                             <div class="space-y-2">
                                 <p class="text-teal-700">
                                     <span class="font-medium">Status:</span>
-                                    <span
-                                        class="inline-block px-3 py-1 rounded-full text-sm font-semibold
-                                                {{ $existingRegistration->status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
+                                    <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold
+                                        {{ $existingRegistration->status === 'approved' ? 'bg-green-100 text-green-800' :
+                                           ($existingRegistration->status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
                                         {{ ucfirst($existingRegistration->status) }}
                                     </span>
                                 </p>
@@ -179,6 +184,13 @@
                                         <tbody class="bg-white divide-y divide-gray-200">
                                             @foreach($minorCourses as $course)
                                             <tr class="hover:bg-teal-50/50 transition-colors duration-150">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <input type="radio"
+                                                           name="course_id"
+                                                           value="{{ $course->id }}"
+                                                           class="form-radio text-teal-600"
+                                                           required>
+                                                </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-teal-700 text-center">
                                                     {{ $course->course_code }}
                                                 </td>
@@ -216,6 +228,31 @@
                                     {{ $minorCourses->links() }}
                                 </div>
                                 @endif
+                            </div>
+
+                            <!-- Semester Information Section -->
+                            <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+                                <div class="bg-gradient-to-r from-teal-600 to-teal-500 px-6 py-4">
+                                    <h4 class="text-lg font-semibold text-white">Semester Information</h4>
+                                </div>
+                                <div class="p-6">
+                                    <div class="mb-4">
+                                        <label for="proposed_semester" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Proposed Semester <span class="text-red-500">*</span>
+                                        </label>
+                                        <select name="proposed_semester" id="proposed_semester"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                                                required>
+                                            <option value="">Select Semester</option>
+                                            @for ($i = 1; $i <= 8; $i++)
+                                                <option value="{{ $i }}">{{ $i }}</option>
+                                            @endfor
+                                        </select>
+                                        @error('proposed_semester')
+                                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Form Upload Section -->

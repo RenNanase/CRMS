@@ -245,14 +245,14 @@
         </div>
     </nav>
 
-    <div class="main-container">
+<div class="main-container">
         <div class="sidebar">
             <h4>CRMS</h4>
             <a href="{{ route('student.dashboard') }}" class="active">
                 <i class="fas fa-home"></i>
                 <span class="nav-text">Home</span>
             </a>
-            <a href="{{ route('students.profile', ['id' => Auth::id()]) }}">
+            <a href="{{ route('students.profile', ['id' => $student->id])}}">
                 <i class="fas fa-user"></i>
                 <span class="nav-text">My Profile</span>
             </a>
@@ -261,11 +261,11 @@
                 <span class="nav-text">Course Registration</span>
             </a>
             <div class="nav-submenu">
-                <a href="{{ route('student.major-registration') }}">
+                <a href="{{ route('student.major-registration') }}" class="nav-link">
                     <i class="fas fa-check-circle"></i>
                     <span class="nav-text">Apply Major Courses</span>
                 </a>
-                <a href="{{ route('student.minor-registration.create', ['id' => $student->id]) }}">
+                <a href="{{ route('student.minor-registration.create') }}" class="nav-link">
                     <i class="fas fa-check-circle"></i>
                     <span class="nav-text">Apply Minor Courses</span>
                 </a>

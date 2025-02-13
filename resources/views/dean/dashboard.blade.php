@@ -417,7 +417,7 @@
                 <i class="fas fa-home"></i>
                 <span class="nav-text">Home</span>
             </a>
-            <a href="#">
+            <a href="{{ route('dean.profile.show') }}">
                 <i class="fas fa-user"></i>
                 <span class="nav-text">Profile</span>
             </a>
@@ -432,20 +432,7 @@
                 </a>
             </div>
         <!-- Faculty Management Section -->
-                    <div class="nav-submenu">
-                        <a href="#">
-                            <i class="fas fa-users"></i>
-                            <span class="nav-text">Students</span>
-                        </a>
-                        <a href="#">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                            <span class="nav-text">Lecturers</span>
-                        </a>
-                        <a href="#">
-                            <i class="fas fa-book"></i>
-                            <span class="nav-text">Courses</span>
-                        </a>
-                    </div>
+
                     </div>
 
         <div class="content-wrapper">

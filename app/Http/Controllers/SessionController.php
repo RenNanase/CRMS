@@ -16,50 +16,69 @@ class SessionController extends Controller
 
     public function login(Request $request)
     {
-        // Validate the login request
-        $infologin = $request->only('email', 'password');
+        try {
+            // Validate the login request
+            $infologin = $request->only('email', 'password');
 
-        Log::info('Login attempt details', [
-            'email' => $request->email,
-            'password_provided' => !empty($request->password)
-        ]);
+            // Enhanced logging before attempt
+            $user = \App\Models\User::where('email', $request->email)->first();
 
-        if (Auth::attempt($infologin)) {
-            $user = Auth::user();
-
-            Log::info('Login successful', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'role' => $user->role
+            Log::info('Login attempt details', [
+                'email' => $request->email,
+                'password_provided' => !empty($request->password),
+                'user_exists' => !is_null($user),
+                'user_details' => $user ? [
+                    'id' => $user->id,
+                    'role' => $user->role,
+                    'password_hash_exists' => !empty($user->password),
+                ] : null
             ]);
 
-            // Handle role-based redirections
-            switch($user->role) {
-                case 'lecturer':
-                    Log::info('Redirecting to lecturer dashboard');
-                    return redirect()->route('lecturer.dashboard');
-                case 'Admin':
-                    return redirect()->route('admin.dashboard');
-                case 'faculty_dean':
-                    return redirect()->route('dean.dashboard');
-                case 'Student':
-                    return redirect()->route('student.dashboard');
-                default:
-                    Log::warning('No specific route for role', ['role' => $user->role]);
-                    return redirect('/');
+            if (Auth::attempt($infologin)) {
+                $user = Auth::user();
+
+                Log::info('Login successful', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'role' => $user->role
+                ]);
+
+                // Handle role-based redirections
+                switch (strtolower($user->role)) {  // Convert to lowercase for case-insensitive comparison
+                    case 'lecturer':
+                        Log::info('Redirecting to lecturer dashboard');
+                        return redirect()->route('lecturer.dashboard');
+                    case 'admin':
+                        return redirect()->route('admin.dashboard');
+                    case 'faculty_dean':
+                    case 'dean':  // Add alternative case
+                        Log::info('Redirecting to dean dashboard', ['role' => $user->role]);
+                        return redirect()->route('dean.dashboard');
+                    case 'student':
+                        return redirect()->route('student.dashboard');
+                    default:
+                        Log::warning('No specific route for role', ['role' => $user->role]);
+                        return redirect('/');
+                }
             }
+
+            // If login fails, log detailed information
+            Log::error('Login failed', [
+                'email' => $request->email,
+                'user_exists' => !is_null($user),
+                'password_verification' => $user ? \Hash::check($request->password, $user->password) : false,
+                'role' => $user ? $user->role : null
+            ]);
+
+            return redirect('/')->with('error', 'Login details are not valid');
+        } catch (\Exception $e) {
+            Log::error('Login exception occurred', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect('/')->with('error', 'An error occurred during login');
         }
-
-        Log::error('Login failed', [
-            'email' => $request->email
-        ]);
-
-        return redirect('/')->with('error', 'Login details are not valid');
     }
-
-
-
-
 
     public function logout()
     {

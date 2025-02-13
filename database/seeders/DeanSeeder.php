@@ -22,9 +22,9 @@ class DeanSeeder extends Seeder
         $deanRole = Role::where('name', 'dean')->first();
 
         User::create([
-            'name' => 'Dr Dayang',
-            'email' => 'drdayang@unissa.edu.bn',
-            'password' => Hash::make('drdayang123@'),
+            'name' => 'Haruka',
+            'email' => 'haruka@gmail.com',
+            'password' => Hash::make('haruka123@'),
             'role_id' => $deanRole->id,
             'faculty_id' => $faculty->id
         ]);

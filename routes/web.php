@@ -27,6 +27,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\GroupController;
 use App\Models\Group;
 use App\Http\Controllers\LecturerController;
+use App\Http\Controllers\DeanProfileController;
 
 
 Route::get('/debug-routes', function () {
@@ -327,6 +328,14 @@ Route::middleware(['auth', 'is_dean'])->group(function () {
     ->name('dean.minor-requests.review');
     Route::put('/dean/minor-requests/{minorRegistration}/recommendation', [MinorRegistrationController::class, 'updateRecommendation'])
     ->name('dean.minor-requests.recommendation');
+    // Dean Profile routes
+    Route::get('/dean/profile', [DeanProfileController::class, 'show'])
+    ->name('dean.profile.show');
+    Route::get('/dean/profile/edit', [DeanProfileController::class, 'edit'])
+    ->name('dean.profile.edit');
+    Route::put('/dean/profile', [DeanProfileController::class, 'update'])
+    ->name('dean.profile.update');
+
 
     // ... other dean routes
 });
